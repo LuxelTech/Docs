@@ -25,6 +25,11 @@ buildings; the page shows those services with animated scenes drawn in code (no 
   growing prefix is a growing random subset), the drone's capture points and the site's ground features. The
   orthomosaic is the site drawn through the top-down camera, clipped to the tiles revealed so far. `setStage()`
   highlights the HUD stage list.
+- **Thermography:** `irTemp(x, y)` is the facade's made-up surface temperature (°C, facade units 800 × 560);
+  `irImages` draws the visible facade and samples `irTemp` at 200 × 140 (a thermal camera's resolution) for the
+  infrared one, both once. `IR_MIN`/`IR_MAX` set the colour scale and must match the `.ramp-scale` labels in
+  `index.html`. Callout temperatures are read from `irTemp`. The divider (`irState.wipe`) moves by itself until the
+  visitor drags the canvas, or focuses or moves the `#ir-wipe` slider; under reduced motion it stays at the slider's value.
 - **Motion:** every animation must stop under `prefers-reduced-motion: reduce`, in both `style.css` and `main.js`;
   in `main.js` each scene then draws its `still` time once.
 - **Checking:** headless Chromium (Playwright) against the preview server: screenshots at 1440×900 and 390×844, no

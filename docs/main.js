@@ -698,4 +698,265 @@
 
     addScene(document.getElementById('pg-canvas'), { draw: drawPhotogrammetry, still: PG.DENSE });
 
+    // ======================================================================================
+    // Thermography: an apartment block over shops, drawn once in visible light and once as an
+    // infrared image computed from a made-up temperature field. A wipe shows one over the other;
+    // it moves by itself until the visitor drags it or uses the slider. Facade units: 800 × 560.
+    // ======================================================================================
+    const IR_W = 800, IR_H = 560;
+    const IR_MIN = -2, IR_MAX = 22;                   // °C at the ends of the colour scale
+    const IR_BX = [110, 690], IR_TOP = 110, IR_SHOP = 400, IR_GROUND = 500;
+    const IR_FLOOR = (IR_SHOP - IR_TOP) / 3;
+    const IR_COLS = [...Array(6)].map((_, i) => IR_BX[0] + 48 + i * (IR_BX[1] - IR_BX[0]) / 6);
+
+    const blob2 = (x, y, cx, cy, rx, ry = rx) => Math.exp(-(((x - cx) / rx) ** 2) - (((y - cy) / ry) ** 2));
+
+    // Surface temperature in °C at a facade point.
+    function irTemp(x, y, noise = 0) {
+        if (y < 90 && !(x > 520 && x < 600 && y > 58)) return -18 + y * 0.05;          // clear night sky
+        if (y >= IR_GROUND) return 3.5 + (y - IR_GROUND) * 0.01 + noise;              // pavement
+        if (x < IR_BX[0] || x > IR_BX[1]) return y < IR_TOP ? -18 : -14 + y * 0.02;    // sky beside the block
+        if (y < 90) return 16 + 10 * blob2(x, y, 560, 66, 30, 14);                     // rooftop unit exhaust
+        let t = 5.5 + noise;
+        if (y < IR_TOP) return t - 1;                                                  // parapet
+        if (y >= IR_SHOP) {                                                            // shopfront
+            const lx = (x - IR_BX[0]) % 116;
+            const glass = y > IR_SHOP + 14 && y < IR_GROUND - 6 && lx > 8 && lx < 108;
+            t = glass ? 11.5 : 8;
+            const door = Math.abs(x - 400) < 26 && y > IR_SHOP + 14;
+            if (door) t = 12 + 6 * Math.max(0, 1 - Math.min(Math.abs(Math.abs(x - 400) - 24), Math.abs(y - IR_SHOP - 16)) / 5);
+            t += 5 * blob2(x, y, 656, 445, 20, 28) + 44 * blob2(x, y, 660, 436, 5);  // electrical panel, hot breaker
+            return t + noise;
+        }
+        // Upper floors: floor slabs bridge heat, window frames leak, glass reflects the cold sky.
+        const fy = (y - IR_TOP) % IR_FLOOR;
+        t += 2.6 * Math.exp(-Math.min(fy, IR_FLOOR - fy) / 4);
+        for (const cx of IR_COLS) {
+            const dx = Math.abs(x - cx), wy0 = fy - 22, wy1 = 82 - fy;
+            if (dx < 25 && wy0 > 0 && wy1 > 0) {
+                const edge = Math.min(25 - dx, wy0, wy1);
+                t = edge < 4 ? 13 - edge * 0.6 : 7.5 + 1.5 * (fy / IR_FLOOR);
+            }
+        }
+        t += 8 * blob2(x, y, 303, 255, 30, 38);                                         // missing insulation
+        t += 7 * blob2(x, y, 545, 118, 24, 12) + 4 * blob2(x, y, 560, 112, 14, 30);     // air leak above a window
+        t -= 3.5 * (blob2(x, y, 190, 128, 40, 18) + 0.7 * blob2(x, y, 235, 160, 26, 22)); // damp masonry
+        return t;
+    }
+
+    const IR_CALLOUTS = [
+        { x: 303, y: 255, label: 'MISSING INSULATION', dx: -10, dy: 60 },
+        { x: 548, y: 118, label: 'AIR LEAKAGE', dx: 0, dy: 64 },
+        { x: 200, y: 132, label: 'MOISTURE', dx: 30, dy: 60 },
+        { x: 660, y: 436, label: 'BREAKER OVERHEAT', dx: -40, dy: -58 },
+    ].map((c) => ({ ...c, temp: irTemp(c.x, c.y) }));
+
+    const irImages = (() => {
+        // Visible light at dusk.
+        const vis = document.createElement('canvas');
+        vis.width = IR_W;
+        vis.height = IR_H;
+        const g = vis.getContext('2d');
+        const rand = seeded(5);
+        let grad = g.createLinearGradient(0, 0, 0, IR_GROUND);
+        grad.addColorStop(0, '#0f1830');
+        grad.addColorStop(1, '#53607e');
+        g.fillStyle = grad;
+        g.fillRect(0, 0, IR_W, IR_GROUND);
+        g.fillStyle = '#34343a';
+        g.fillRect(0, IR_GROUND, IR_W, IR_H - IR_GROUND);
+        g.fillStyle = '#4a4a50';
+        g.fillRect(0, IR_GROUND, IR_W, 5);
+        g.fillStyle = '#7d7f86';                                    // rooftop unit
+        g.fillRect(520, 58, 80, 32);
+        g.strokeStyle = '#55575d';
+        g.beginPath();
+        g.arc(560, 72, 10, 0, TAU);
+        g.stroke();
+        g.fillStyle = '#6e4a38';                                    // brick
+        g.fillRect(IR_BX[0], IR_TOP - 20, IR_BX[1] - IR_BX[0], IR_GROUND - IR_TOP + 20);
+        g.strokeStyle = 'rgba(0,0,0,0.14)';
+        g.lineWidth = 1;
+        g.beginPath();
+        for (let y = IR_TOP; y < IR_SHOP; y += 7) {
+            g.moveTo(IR_BX[0], y + 0.5);
+            g.lineTo(IR_BX[1], y + 0.5);
+            for (let x = IR_BX[0] + ((y / 7) % 2) * 9; x < IR_BX[1]; x += 18) {
+                g.moveTo(x + 0.5, y);
+                g.lineTo(x + 0.5, y + 7);
+            }
+        }
+        g.stroke();
+        for (let i = 0; i < 260; i++) {                             // weathering
+            g.fillStyle = `rgba(${rand() < 0.5 ? '0,0,0' : '255,220,190'},${0.04 + rand() * 0.05})`;
+            g.fillRect(IR_BX[0] + rand() * 580, IR_TOP + rand() * 290, 9 + rand() * 9, 6);
+        }
+        g.fillStyle = '#a89c8c';                                    // parapet coping and string courses
+        g.fillRect(IR_BX[0] - 6, IR_TOP - 24, IR_BX[1] - IR_BX[0] + 12, 8);
+        for (let k = 1; k <= 3; k++) g.fillRect(IR_BX[0], IR_TOP + k * IR_FLOOR - 3, IR_BX[1] - IR_BX[0], 6);
+        for (let f = 0; f < 3; f++) {
+            for (const cx of IR_COLS) {
+                const y0 = IR_TOP + f * IR_FLOOR + 22, lit = rand() < 0.35;
+                g.fillStyle = '#d9d2c6';
+                g.fillRect(cx - 27, y0 - 2, 54, 64);
+                grad = g.createLinearGradient(cx - 25, y0, cx + 25, y0 + 60);
+                grad.addColorStop(0, lit ? '#f0c879' : '#30405a');
+                grad.addColorStop(1, lit ? '#b8803c' : '#6d82a0');
+                g.fillStyle = grad;
+                g.fillRect(cx - 25, y0, 50, 60);
+                g.fillStyle = '#d9d2c6';
+                g.fillRect(cx - 1, y0, 2, 60);
+                g.fillStyle = '#9a8e80';
+                g.fillRect(cx - 29, y0 + 60, 58, 5);
+            }
+        }
+        g.fillStyle = '#1b1c22';                                    // shop sign band
+        g.fillRect(IR_BX[0], IR_SHOP, IR_BX[1] - IR_BX[0], 14);
+        for (let x = IR_BX[0]; x < IR_BX[1] - 8; x += 116) {
+            grad = g.createLinearGradient(0, IR_SHOP + 14, 0, IR_GROUND);
+            grad.addColorStop(0, '#e9c98e');
+            grad.addColorStop(1, '#8a6a44');
+            g.fillStyle = grad;
+            g.fillRect(x + 8, IR_SHOP + 14, 100, IR_GROUND - IR_SHOP - 20);
+            g.strokeStyle = '#2a2b31';
+            g.lineWidth = 3;
+            g.strokeRect(x + 8, IR_SHOP + 14, 100, IR_GROUND - IR_SHOP - 20);
+        }
+        g.fillStyle = '#26272d';                                    // door
+        g.fillRect(376, IR_SHOP + 16, 48, IR_GROUND - IR_SHOP - 16);
+        g.fillStyle = '#c9a76c';
+        g.fillRect(382, IR_SHOP + 24, 36, 50);
+        g.fillStyle = '#8c9097';                                    // electrical panel and conduit
+        g.fillRect(642, 418, 30, 54);
+        g.fillStyle = '#6a6e75';
+        g.fillRect(646, 424, 22, 3);
+        g.fillRect(668, 360, 3, 58);
+        g.fillStyle = '#4b4d53';                                    // downpipe
+        g.fillRect(118, IR_TOP - 16, 5, IR_GROUND - IR_TOP + 16);
+
+        // Infrared: the temperature field sampled at a thermal camera's low resolution, then smoothed.
+        const SW = 200, SH = 140, small = document.createElement('canvas');
+        small.width = SW;
+        small.height = SH;
+        const sg = small.getContext('2d'), img = sg.createImageData(SW, SH);
+        for (let j = 0; j < SH; j++) {
+            for (let i = 0; i < SW; i++) {
+                const t = irTemp((i + 0.5) * IR_W / SW, (j + 0.5) * IR_H / SH, (rand() - 0.5) * 0.5);
+                const [r, gg, b] = ironbow((t - IR_MIN) / (IR_MAX - IR_MIN)), o = (j * SW + i) * 4;
+                img.data.set([r, gg, b, 255], o);
+            }
+        }
+        sg.putImageData(img, 0, 0);
+        const ir = document.createElement('canvas');
+        ir.width = IR_W;
+        ir.height = IR_H;
+        const ig = ir.getContext('2d');
+        ig.imageSmoothingQuality = 'high';
+        ig.drawImage(small, 0, 0, IR_W, IR_H);
+        return { vis, ir };
+    })();
+
+    const irState = { auto: true, wipe: 0.5, k: 1, ox: 0, oy: 0 };
+    const irSlider = document.getElementById('ir-wipe');
+
+    function drawThermography(ctx, w, h, t) {
+        const k = Math.min(w / IR_W, h / IR_H), ox = (w - IR_W * k) / 2, oy = (h - IR_H * k) / 2;
+        Object.assign(irState, { k, ox, oy });
+        const still = reduce.matches;
+        if (irState.auto && !still) {
+            irState.wipe = 0.5 + 0.4 * Math.sin(t * 0.5);
+            if (irSlider) irSlider.value = Math.round(irState.wipe * 100);
+        }
+        const split = irState.wipe * IR_W;           // the infrared image is shown left of the split
+        ctx.drawImage(irImages.vis, ox, oy, IR_W * k, IR_H * k);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(ox, oy, split * k, IR_H * k);
+        ctx.clip();
+        ctx.drawImage(irImages.ir, ox, oy, IR_W * k, IR_H * k);
+
+        // Callouts on the infrared side.
+        const fs = Math.max(9, Math.round(11 * Math.min(1, k * 1.25)));
+        ctx.font = `700 ${fs}px ui-monospace, Consolas, monospace`;
+        ctx.textBaseline = 'middle';
+        for (const c of IR_CALLOUTS) {
+            const x = ox + c.x * k, y = oy + c.y * k, pulse = still ? 0.5 : (t * 0.8 + c.x * 0.003) % 1;
+            ctx.strokeStyle = `rgba(255,255,255,${0.9 - pulse * 0.8})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(x, y, (8 + pulse * 14) * Math.max(0.6, k), 0, TAU);
+            ctx.stroke();
+            const lx = x + c.dx * k, ly = y + c.dy * k;
+            const text = `${c.label} ${c.temp.toFixed(1)} °C`, tw = ctx.measureText(text).width;
+            const bx = clamp(lx - tw / 2 - 6, ox + 4, ox + IR_W * k - tw - 16);
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(lx, ly);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(5,4,10,0.82)';
+            ctx.fillRect(bx, ly - fs * 0.8, tw + 12, fs * 1.6);
+            ctx.fillStyle = '#fff4b0';
+            ctx.fillText(text, bx + 6, ly);
+        }
+        ctx.restore();
+
+        // The divider and its handle.
+        const sx = ox + split * k;
+        ctx.strokeStyle = '#ffb21c';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#ff7a1a';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(sx, oy);
+        ctx.lineTo(sx, oy + IR_H * k);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        const hy = oy + IR_H * k / 2;
+        ctx.fillStyle = 'rgba(5,4,10,0.85)';
+        ctx.beginPath();
+        ctx.arc(sx, hy, 15, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffb21c';
+        ctx.beginPath();
+        ctx.moveTo(sx - 4, hy - 6); ctx.lineTo(sx - 10, hy); ctx.lineTo(sx - 4, hy + 6);
+        ctx.moveTo(sx + 4, hy - 6); ctx.lineTo(sx + 10, hy); ctx.lineTo(sx + 4, hy + 6);
+        ctx.fill();
+        ctx.font = '700 10px ui-monospace, Consolas, monospace';
+        ctx.textBaseline = 'alphabetic';
+        if (split > 120) {
+            ctx.fillStyle = 'rgba(255,244,176,0.9)';
+            ctx.fillText('INFRARED', sx - 72, hy - 26);
+        }
+        if (split < IR_W - 120) {
+            ctx.fillStyle = 'rgba(245,241,248,0.9)';
+            ctx.fillText('VISIBLE', sx + 14, hy - 26);
+        }
+    }
+
+    const irScene = addScene(document.getElementById('ir-canvas'), { draw: drawThermography, still: 0 });
+    if (irScene && irSlider) {
+        const setWipe = (v) => {
+            irState.auto = false;
+            irState.wipe = clamp(v);
+            irSlider.value = Math.round(irState.wipe * 100);
+            render(irScene);
+        };
+        irSlider.addEventListener('input', () => setWipe(irSlider.value / 100));
+        irSlider.addEventListener('focus', () => (irState.auto = false));
+        const fromPointer = (e) => {
+            const r = irScene.canvas.getBoundingClientRect();
+            setWipe((e.clientX - r.left - irState.ox) / (IR_W * irState.k));
+        };
+        irScene.canvas.addEventListener('pointerdown', (e) => {
+            irScene.canvas.setPointerCapture(e.pointerId);
+            fromPointer(e);
+        });
+        irScene.canvas.addEventListener('pointermove', (e) => {
+            if (irScene.canvas.hasPointerCapture(e.pointerId)) fromPointer(e);
+        });
+    }
+
 })();

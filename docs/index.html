@@ -38,6 +38,7 @@
                     residential buildings. Measured data, not guesswork.</p>
                 <nav class="hero-links" aria-label="Services">
                     <a href="#photogrammetry"><span>01</span> Photogrammetry &amp; Mapping</a>
+                    <a href="#thermography"><span>02</span> Thermography</a>
                 </nav>
             </div>
 
@@ -91,6 +92,46 @@
                     </div>
                 </div>
             </figure>
+        </section>
+
+        <section class="service flip" id="thermography" aria-labelledby="ir-title">
+            <div class="service-text">
+                <p class="eyebrow"><span class="idx">02</span> Thermography</p>
+                <h2 id="ir-title">Heat tells the story.</h2>
+                <p>Calibrated infrared cameras, handheld and drone-mounted, map the surface temperatures of roofs and
+                    facades. Problems the eye can't see show up as clear thermal patterns, long before they turn into
+                    repairs.</p>
+                <ul class="specs">
+                    <li><b>Roofs</b> Wet insulation under flat roofs, found before leaks spread.</li>
+                    <li><b>Envelope</b> Missing insulation, thermal bridges and air leakage.</li>
+                    <li><b>Electrical</b> Overheating breakers, connections and equipment.</li>
+                    <li><b>Reports</b> Radiometric images with temperatures, locations and findings.</li>
+                </ul>
+            </div>
+
+            <div class="ir-wrap">
+                <figure class="scene ir-scene">
+                    <canvas id="ir-canvas" role="img"
+                        aria-label="An apartment block with shops on the ground floor, split by a sliding divider into a visible-light photo and an infrared image. The infrared side shows missing insulation between two windows, warm air leaking above a top-floor window, a cold damp patch below the roof edge, and an overheating breaker in an electrical panel."></canvas>
+                    <div class="hud" aria-hidden="true">
+                        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                        <div class="readout top-left">
+                            <span>IR <b>7.5–14</b> µm</span>
+                            <span>ε <b>0.93</b> · T.AIR <b>2.0</b> °C</span>
+                        </div>
+                        <div class="readout bottom-right">
+                            <span class="ramp"></span>
+                            <span class="ramp-scale"><span>−2</span><span>22 °C</span></span>
+                        </div>
+                    </div>
+                </figure>
+                <label class="ir-slider">
+                    <span>Visible</span>
+                    <input id="ir-wipe" type="range" min="0" max="100" value="50"
+                        aria-label="Infrared view: drag to compare the visible and infrared images">
+                    <span>Infrared</span>
+                </label>
+            </div>
         </section>
     </main>
 

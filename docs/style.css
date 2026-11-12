@@ -200,6 +200,10 @@ h1 {
     scroll-margin-top: 0;
 }
 
+.service.flip {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+}
+
 .service.flip .service-text {
     order: 2;
 }
@@ -325,6 +329,38 @@ h2 {
     background: var(--ironbow);
 }
 
+/* ---------- thermography ---------- */
+.ir-scene {
+    aspect-ratio: 10 / 7;
+    touch-action: pan-y;
+    cursor: ew-resize;
+}
+
+.ramp-scale {
+    display: flex;
+    justify-content: space-between;
+    width: 120px;
+}
+
+.ir-slider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+    font: 600 11px/1 var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.ir-slider input {
+    flex: 1;
+    accent-color: var(--orange);
+    height: 24px;
+    margin: 0;
+    cursor: pointer;
+}
+
 /* ---------- footer ---------- */
 .site-footer {
     display: flex;
@@ -342,7 +378,8 @@ h2 {
 /* ---------- narrow screens ---------- */
 @media (max-width: 860px) {
     .hero,
-    .service {
+    .service,
+    .service.flip {
         grid-template-columns: minmax(0, 1fr);
     }
 
@@ -370,7 +407,8 @@ h2 {
         font-size: 10px;
     }
 
-    .ramp {
+    .ramp,
+    .ramp-scale {
         width: 80px;
     }
 }
