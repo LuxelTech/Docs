@@ -36,6 +36,9 @@
                 <h1 id="hero-title">See What's <span class="hot">Hidden.</span></h1>
                 <p class="lede">Drone photogrammetry, aerial mapping and thermography for large commercial and
                     residential buildings. Measured data, not guesswork.</p>
+                <nav class="hero-links" aria-label="Services">
+                    <a href="#photogrammetry"><span>01</span> Photogrammetry &amp; Mapping</a>
+                </nav>
             </div>
 
             <figure class="scene hero-scene">
@@ -50,6 +53,41 @@
                     <div class="readout bottom-right">
                         <span>T.MAX <b data-hud="tmax">--.-</b> °C</span>
                         <span class="ramp"></span>
+                    </div>
+                </div>
+            </figure>
+        </section>
+
+        <section class="service" id="photogrammetry" aria-labelledby="pg-title">
+            <div class="service-text">
+                <p class="eyebrow"><span class="idx">01</span> Drone photogrammetry &amp; mapping</p>
+                <h2 id="pg-title">Every surface, measured.</h2>
+                <p>Automated drone flights capture hundreds of overlapping, geotagged images of a building and its
+                    site. Photogrammetry turns them into accurate, measurable 3D data, without scaffolding, lifts or
+                    anyone on the roof.</p>
+                <ul class="specs">
+                    <li><b>3D models</b> Textured meshes and point clouds of the whole structure.</li>
+                    <li><b>Orthomosaics</b> Map-accurate aerial images of roofs and sites.</li>
+                    <li><b>Measurements</b> Roof areas, heights, volumes and distances.</li>
+                    <li><b>Documentation</b> Facade and roof condition, construction progress and closeout.</li>
+                </ul>
+            </div>
+
+            <figure class="scene pg-scene">
+                <canvas id="pg-canvas" role="img"
+                    aria-label="A drone circles a tower and its low wing taking photos; the photos become a point cloud, then a shaded 3D model, then the view turns top-down and an orthomosaic map of the site tiles in with a survey grid and ground control points."></canvas>
+                <div class="hud" aria-hidden="true">
+                    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                    <ol class="readout top-left stages" data-stages>
+                        <li>01 CAPTURE</li>
+                        <li>02 ALIGN</li>
+                        <li>03 MESH</li>
+                        <li>04 ORTHOMAP</li>
+                    </ol>
+                    <div class="readout top-right">
+                        <span>IMAGES <b data-hud="images">0</b></span>
+                        <span>ALT <b>60</b> m · OVERLAP <b>80</b>%</span>
+                        <span>GSD <b>1.2</b> cm/px</span>
                     </div>
                 </div>
             </figure>

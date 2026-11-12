@@ -2,8 +2,8 @@
 
 ## Phases (current and upcoming)
 
-- **Up next:** 1. Photogrammetry & Mapping demo section.
-- **Then:** 2. Thermography demo section, then a polish pass (phone layout, performance, accessibility).
+- **Up next:** 1. Thermography demo section, then a polish pass (phone layout, performance, accessibility).
+- **Then:** nothing planned.
 - **Later:** contact details (left out for now, by request).
 
 ## Decisions
@@ -15,14 +15,7 @@
 - No contact information for now.
 - Scenes use 2D canvas rather than WebGL: the point counts are small, and it needs no fallback.
 
-## 1. Photogrammetry & Mapping
-
-Text column (orthomosaics, 3D models, measurements, roof and facade documentation) beside a canvas that loops
-through four stages, named in a HUD stage list: a drone orbits a tower and leaves a camera frustum at each capture
-point; sparse points appear; they densify and a shaded mesh fades in; the camera tilts to top-down and an
-orthomosaic tiles in with a survey grid, ground control points and a scale bar. Still frame: the finished mesh.
-
-## 2. Thermography
+## 1. Thermography
 
 Text column (roof moisture, missing insulation, air leakage, electrical hot spots) beside a facade shown in visible
 light, with a wipe that reveals the infrared view (auto-moving until the visitor drags it or uses the keyboard).
@@ -32,3 +25,7 @@ Hot spots pulse, with callouts giving their temperatures, and a °C colour scale
 
 - **Scaffold and hero** (`docs/index.html`, `docs/style.css`, `docs/main.js` hero section): page chrome, logo,
   favicon, CNAME, the scene runner and the hero thermal scan.
+- **Photogrammetry & Mapping** (`#photogrammetry` in `docs/index.html`, the photogrammetry section of
+  `docs/main.js`): a drone circles a tower and wing leaving camera frusta, then sparse and dense points, a shaded
+  mesh, and a top-down orthomosaic tiling in with a survey grid, ground control points and a scale bar.
+  Still frame: the finished mesh.
