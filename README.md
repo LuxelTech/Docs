@@ -18,6 +18,9 @@ Then open <http://localhost:8000/>.
   point into its thermal colour.
 - **Photogrammetry & Mapping:** what the service delivers, beside a drone that circles a building taking photos; the
   photos become a point cloud, a 3D model, and then a top-down orthomosaic map of the site.
+- **Thermography:** what the service finds, beside a building facade split into a visible-light and an infrared view,
+  with labelled problems (missing insulation, air leakage, moisture, an overheating breaker). Visitors drag the
+  divider, or use the slider under it.
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 
