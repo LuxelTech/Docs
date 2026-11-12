@@ -20,6 +20,11 @@ buildings; the page shows those services with animated scenes drawn in code (no 
 - **Hero:** points sampled on a mid-rise block and a gabled house, each with a face normal (back faces are skipped)
   and a made-up temperature; sorted by temperature so each colour is drawn as one batch. A scan plane climbs over
   `HERO_SWEEP` s and recolours the points it has passed, holds, then fades back (`HERO_PERIOD`).
+- **Photogrammetry:** one timeline in seconds (`PG`: capture, sparse, dense/mesh, tilt to top-down, tiles, hold,
+  end). `pg` holds the blocks' faces (flat-shaded, with window quads), the points sampled on them (shuffled, so a
+  growing prefix is a growing random subset), the drone's capture points and the site's ground features. The
+  orthomosaic is the site drawn through the top-down camera, clipped to the tiles revealed so far. `setStage()`
+  highlights the HUD stage list.
 - **Motion:** every animation must stop under `prefers-reduced-motion: reduce`, in both `style.css` and `main.js`;
   in `main.js` each scene then draws its `still` time once.
 - **Checking:** headless Chromium (Playwright) against the preview server: screenshots at 1440×900 and 390×844, no

@@ -156,6 +156,112 @@ h1 {
     color: var(--text-soft);
 }
 
+.hero-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.hero-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font: 700 13px/1 var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.hero-links a:hover {
+    border-color: var(--orange);
+    background: rgba(255, 122, 26, 0.14);
+}
+
+.hero-links span,
+.idx {
+    color: var(--orange);
+}
+
+/* ---------- service sections ---------- */
+.service {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: clamp(24px, 4vw, 64px);
+    width: min(100% - 2 * var(--gutter), var(--max));
+    margin: 0 auto;
+    padding: clamp(56px, 9vw, 120px) 0;
+    border-top: 1px solid var(--line-soft);
+    scroll-margin-top: 0;
+}
+
+.service.flip .service-text {
+    order: 2;
+}
+
+h2 {
+    margin: 0 0 18px;
+    font-size: clamp(32px, 4.2vw, 56px);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+}
+
+.service-text > p:not(.eyebrow) {
+    margin: 0 0 24px;
+    color: var(--text-soft);
+    font-size: clamp(15px, 1.2vw, 17px);
+}
+
+.specs {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-soft);
+}
+
+.specs li {
+    display: grid;
+    grid-template-columns: 9.5em 1fr;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--text-soft);
+    font-size: 15px;
+}
+
+.specs b {
+    font: 700 12px/1.9 var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+.stages {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.stages li {
+    transition: color 0.3s;
+}
+
+.stages li.is-active {
+    color: var(--amber);
+}
+
+.stages li.is-active::after {
+    content: " ◂";
+}
+
 /* ---------- scenes (canvas + HUD overlay) ---------- */
 .scene {
     position: relative;
@@ -235,10 +341,23 @@ h1 {
 
 /* ---------- narrow screens ---------- */
 @media (max-width: 860px) {
-    .hero {
+    .hero,
+    .service {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero {
         min-height: 0;
         padding-top: 28px;
+    }
+
+    .service.flip .service-text {
+        order: 0;
+    }
+
+    .specs li {
+        grid-template-columns: 1fr;
+        gap: 2px;
     }
 
     .hud-bar-mid {

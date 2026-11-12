@@ -16,6 +16,8 @@ Then open <http://localhost:8000/>.
 
 - **Hero:** the Luxel logo, "See What's Hidden." and a point-cloud building that a scan plane sweeps up, turning each
   point into its thermal colour.
+- **Photogrammetry & Mapping:** what the service delivers, beside a drone that circles a building taking photos; the
+  photos become a point cloud, a 3D model, and then a top-down orthomosaic map of the site.
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 

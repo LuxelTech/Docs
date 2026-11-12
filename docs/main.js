@@ -340,4 +340,362 @@
     }
 
     addScene(document.getElementById('hero-canvas'), { draw: drawHero, still: 4.6 });
+    // ======================================================================================
+    // Photogrammetry & Mapping: a drone circles a tower and its wing taking photos (camera frusta),
+    // the photos become a sparse then dense point cloud, a shaded mesh, and finally the view turns
+    // top-down while an orthomosaic tiles in. 1 unit = 5 m.
+    // ======================================================================================
+    const PG = { CAPTURE: 5, SPARSE: 8, DENSE: 11.5, TILT: 13.5, TILES: 16.5, HOLD: 18.2, END: 19 };
+    const PG_TARGET = [0.6, 2.6, 0.3];
+    const PG_LIGHT = (() => { const l = [0.45, 0.8, 0.4], m = Math.hypot(...l); return l.map((v) => v / m); })();
+    const PG_TILE = 1.75, PG_TILES_N = 8;        // the orthomosaic is 8 × 8 tiles of 1.75 units, centred on 0, 0
+
+    const pg = (() => {
+        const rand = seeded(11);
+        // Blocks: x0, x1, z0, z1, height, floors (0 = no windows), wall and roof colours.
+        const boxes = [
+            { x: [-1.3, 1.3], z: [-1.3, 1.3], y: [0, 6.4], floors: 10, wall: [120, 128, 140], roof: [132, 136, 142] },
+            { x: [1.3, 4.6], z: [-1.1, 1.6], y: [0, 2.2], floors: 3, wall: [104, 110, 122], roof: [92, 96, 104] },
+            { x: [-0.8, -0.2], z: [-0.7, -0.1], y: [6.4, 6.75], floors: 0, wall: [150, 154, 160], roof: [178, 182, 188] },
+            { x: [0.3, 0.9], z: [0.2, 0.8], y: [6.4, 6.7], floors: 0, wall: [150, 154, 160], roof: [178, 182, 188] },
+        ];
+        // Faces with their corners, outward normal, flat-shaded colour and window quads.
+        const faces = [];
+        const shade = (c, n) => {
+            const d = Math.max(0, n[0] * PG_LIGHT[0] + n[1] * PG_LIGHT[1] + n[2] * PG_LIGHT[2]);
+            return c.map((v) => Math.round(v * (0.38 + 0.62 * d)));
+        };
+        for (const b of boxes) {
+            const [x0, x1] = b.x, [z0, z1] = b.z, [y0, y1] = b.y;
+            const sides = [
+                { n: [0, 0, 1], c: [[x0, z1], [x1, z1]] }, { n: [0, 0, -1], c: [[x1, z0], [x0, z0]] },
+                { n: [1, 0, 0], c: [[x1, z1], [x1, z0]] }, { n: [-1, 0, 0], c: [[x0, z0], [x0, z1]] },
+            ];
+            for (const { n, c: [[ax, az], [bx, bz]] } of sides) {
+                const wins = [];
+                if (b.floors) {
+                    const len = Math.hypot(bx - ax, bz - az), cols = Math.max(2, Math.round(len / 0.55)), fh = (y1 - y0) / b.floors;
+                    for (let f = 0; f < b.floors; f++) {
+                        for (let k = 0; k < cols; k++) {
+                            const u0 = (k + 0.18) / cols, u1 = (k + 0.82) / cols, v0 = y0 + fh * (f + 0.28), v1 = y0 + fh * (f + 0.8);
+                            const p = (u, v) => [mix(ax, bx, u), v, mix(az, bz, u)];
+                            wins.push([p(u0, v0), p(u1, v0), p(u1, v1), p(u0, v1)]);
+                        }
+                    }
+                }
+                faces.push({ n, pts: [[ax, y0, az], [bx, y0, bz], [bx, y1, bz], [ax, y1, az]], fill: css(shade(b.wall, n)), wins });
+            }
+            faces.push({ n: [0, 1, 0], pts: [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], fill: css(shade(b.roof, [0, 1, 0])), wins: [] });
+        }
+        // Points on every face (grey from the face's shade) plus the ground, in random order so a
+        // growing prefix of them is a growing random subset.
+        const pts = [];
+        for (const f of faces) {
+            const [a, b, , d] = f.pts, g = css(shade([215, 215, 225], f.n));
+            const lu = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]), lv = Math.hypot(d[0] - a[0], d[1] - a[1], d[2] - a[2]);
+            const count = Math.round(lu * lv / 0.018);
+            for (let i = 0; i < count; i++) {
+                const u = rand(), v = rand();
+                pts.push({ p: [0, 1, 2].map((k) => a[k] + (b[k] - a[k]) * u + (d[k] - a[k]) * v), g });
+            }
+        }
+        for (let i = 0; i < 1400; i++) {
+            const x = (rand() - 0.5) * 13, z = (rand() - 0.5) * 13;
+            pts.push({ p: [x, 0, z], g: 'rgb(110,104,96)' });
+        }
+        for (let i = pts.length - 1; i > 0; i--) {
+            const j = Math.floor(rand() * (i + 1));
+            [pts[i], pts[j]] = [pts[j], pts[i]];
+        }
+        const greys = [...new Set(pts.map((q) => q.g))];
+        const xyz = new Float32Array(pts.length * 3), grey = new Uint8Array(pts.length);
+        pts.forEach((q, i) => {
+            xyz.set(q.p, i * 3);
+            grey[i] = greys.indexOf(q.g);
+        });
+
+        // Capture points: two rings (high and low), 24 photos each.
+        const shots = [];
+        for (const [ring, y, r, aim] of [[0, 7.4, 6.2, 2.4], [1, 3.8, 6.8, 1.6]]) {
+            for (let k = 0; k < 24; k++) {
+                const a = (k / 24 + ring * 0.02) * TAU;
+                shots.push({ pos: [PG_TARGET[0] + Math.cos(a) * r, y, PG_TARGET[2] + Math.sin(a) * r], aim: [PG_TARGET[0], aim, PG_TARGET[2]] });
+            }
+        }
+
+        // The site seen from above (the orthomosaic), drawn on the ground plane.
+        const ground = [
+            { fill: '#1f2d1c', poly: [[-7, -7], [7, -7], [7, 7], [-7, 7]] },                       // lawn
+            { fill: '#2a2a30', poly: [[-7, 4.9], [7, 4.9], [7, 6.4], [-7, 6.4]] },                 // road
+            { fill: '#2d2d33', poly: [[-6.4, -5.2], [-2.1, -5.2], [-2.1, 4.9], [-6.4, 4.9]] },     // car park
+            { fill: '#5f5c58', poly: [[-2.1, -2.2], [5.4, -2.2], [5.4, 2.5], [-2.1, 2.5]] },       // plaza
+            { fill: '#4d4a46', poly: [[2.2, 2.5], [3.0, 2.5], [3.0, 4.9], [2.2, 4.9]] },           // path to road
+        ];
+        const lines = [];                                     // parking bays and road markings
+        for (let z = -4.8; z <= 4.4; z += 0.55) lines.push([[-6.2, z], [-5.1, z]], [[-3.4, z], [-2.3, z]]);
+        for (let x = -6.6; x < 7; x += 0.9) lines.push([[x, 5.65], [x + 0.45, 5.65]]);
+        const trees = [];
+        for (let i = 0; i < 26; i++) {
+            const side = i % 2, x = side ? 5.6 + rand() * 1.2 : -1.4 + rand() * 7, z = side ? -6.5 + rand() * 11 : -3.2 - rand() * 3.5;
+            trees.push([x, z, 0.3 + rand() * 0.35]);
+        }
+        const gcps = [[-5.8, -6.2], [6.2, -6.0], [6.0, 4.3], [-5.6, 4.2]];
+        return { faces, xyz, grey, greys, n: pts.length, shots, ground, lines, trees, gcps };
+    })();
+
+    // Draws a polygon of [x, y, z] points through the camera.
+    function poly3(ctx, cam, pts) {
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+            const q = cam.project(p[0], p[1], p[2]);
+            i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
+        });
+        ctx.closePath();
+    }
+
+    function drawMesh(ctx, cam, alpha, ortho) {
+        const visible = [];
+        for (const f of pg.faces) {
+            const c = f.pts.reduce((s, p) => [s[0] + p[0] / 4, s[1] + p[1] / 4, s[2] + p[2] / 4], [0, 0, 0]);
+            const e = cam.eye;
+            if ((e[0] - c[0]) * f.n[0] + (e[1] - c[1]) * f.n[1] + (e[2] - c[2]) * f.n[2] <= 0) continue;
+            visible.push([Math.hypot(e[0] - c[0], e[1] - c[1], e[2] - c[2]), f]);
+        }
+        visible.sort((a, b) => b[0] - a[0]);
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 1;
+        for (const [, f] of visible) {
+            poly3(ctx, cam, f.pts);
+            ctx.fillStyle = f.fill;
+            ctx.fill();
+            ctx.strokeStyle = ortho ? 'rgba(0,0,0,0.35)' : 'rgba(255,178,28,0.35)';
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(20,34,52,0.78)';
+            for (const w of f.wins) {
+                poly3(ctx, cam, w);
+                ctx.fill();
+            }
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    function drawSite(ctx, cam) {
+        for (const g of pg.ground) {
+            poly3(ctx, cam, g.poly.map(([x, z]) => [x, 0, z]));
+            ctx.fillStyle = g.fill;
+            ctx.fill();
+        }
+        ctx.strokeStyle = 'rgba(230,230,230,0.55)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (const [[ax, az], [bx, bz]] of pg.lines) {
+            const a = cam.project(ax, 0, az);
+            ctx.moveTo(a[0], a[1]);
+            const b = cam.project(bx, 0, bz);
+            ctx.lineTo(b[0], b[1]);
+        }
+        ctx.stroke();
+        for (const [x, z, r] of pg.trees) {
+            const q = cam.project(x, 0.4, z), s = r * cam.F / q[2];
+            ctx.fillStyle = '#2c4423';
+            ctx.beginPath();
+            ctx.arc(q[0], q[1], s, 0, TAU);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(120,160,80,0.35)';
+            ctx.beginPath();
+            ctx.arc(q[0] - s * 0.25, q[1] - s * 0.25, s * 0.55, 0, TAU);
+            ctx.fill();
+        }
+    }
+
+    function frustum(ctx, cam, shot, size) {
+        const [px, py, pz] = shot.pos, d = shot.aim.map((v, k) => v - shot.pos[k]), m = Math.hypot(...d);
+        const f = d.map((v) => v / m), r = [-f[2], 0, f[0]], rm = Math.hypot(...r);
+        r[0] /= rm; r[2] /= rm;
+        const u = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+        const corner = (sx, sy) => [0, 1, 2].map((k) => shot.pos[k] + (f[k] + (r[k] * sx + u[k] * sy) * 0.6) * size);
+        const apex = [...cam.project(px, py, pz)];
+        const cs = [corner(-1, -0.7), corner(1, -0.7), corner(1, 0.7), corner(-1, 0.7)].map((c) => [...cam.project(...c)]);
+        ctx.beginPath();
+        for (const c of cs) {
+            ctx.moveTo(apex[0], apex[1]);
+            ctx.lineTo(c[0], c[1]);
+        }
+        cs.forEach((c, i) => (i ? ctx.lineTo(c[0], c[1]) : ctx.moveTo(c[0], c[1])));
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    let pgStage = -1;
+    function setStage(i) {
+        if (i === pgStage) return;
+        pgStage = i;
+        document.querySelectorAll('[data-stages] li').forEach((li, k) => li.classList.toggle('is-active', k === i));
+    }
+
+    function drawPhotogrammetry(ctx, w, h, t) {
+        t %= PG.END;
+        const tilt = ease(clamp((t - PG.DENSE) / (PG.TILT - PG.DENSE)));
+        const orbitYaw = 0.5 + Math.min(t, PG.DENSE) * 0.05;
+        const cam = camera(w, h, {
+            yaw: mix(orbitYaw, 0, tilt), pitch: mix(0.36, Math.PI / 2, tilt), dist: mix(19.5, 20, tilt),
+            target: [mix(PG_TARGET[0], 0, tilt), mix(PG_TARGET[1], 0, tilt), mix(PG_TARGET[2], 0, tilt)], fov: 0.75,
+        });
+        setStage(t < PG.CAPTURE ? 0 : t < PG.SPARSE ? 1 : t < PG.TILT ? 2 : 3);
+        ctx.globalAlpha = 1;
+        const out = 1 - clamp((t - PG.HOLD) / (PG.END - PG.HOLD));
+
+        // Ground grid (fades as the orthomosaic arrives).
+        ctx.strokeStyle = `rgba(92,200,255,${0.12 * out})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let k = -7; k <= 7; k += 1) {
+            let a = cam.project(k, 0, -7), b;
+            ctx.moveTo(a[0], a[1]);
+            b = cam.project(k, 0, 7);
+            ctx.lineTo(b[0], b[1]);
+            a = cam.project(-7, 0, k);
+            ctx.moveTo(a[0], a[1]);
+            b = cam.project(7, 0, k);
+            ctx.lineTo(b[0], b[1]);
+        }
+        ctx.stroke();
+
+        // A faint outline of the building until the mesh replaces it.
+        if (t < PG.SPARSE + 2) {
+            ctx.strokeStyle = `rgba(92,200,255,${0.35 * (1 - clamp((t - PG.SPARSE) / 2))})`;
+            ctx.lineWidth = 1;
+            for (const f of pg.faces) {
+                poly3(ctx, cam, f.pts);
+                ctx.stroke();
+            }
+        }
+
+        // Stage 1: capture. Frusta stay behind the drone and fade during alignment.
+        const shotsTaken = Math.min(pg.shots.length, Math.floor(clamp(t / PG.CAPTURE) * pg.shots.length + 0.0001));
+        const frustaAlpha = t < PG.CAPTURE ? 1 : 1 - clamp((t - PG.CAPTURE) / (PG.SPARSE - PG.CAPTURE + 1));
+        if (frustaAlpha > 0) {
+            ctx.lineWidth = 1;
+            for (let i = 0; i < shotsTaken; i++) {
+                const age = t < PG.CAPTURE ? (shotsTaken - 1 - i) : 99;
+                ctx.strokeStyle = age < 1 ? `rgba(255,244,176,${frustaAlpha})` : `rgba(255,122,26,${0.45 * frustaAlpha})`;
+                frustum(ctx, cam, pg.shots[i], age < 1 ? 0.9 : 0.6);
+            }
+        }
+        if (t < PG.CAPTURE) {
+            // The drone flies between capture points.
+            const k = clamp(t / PG.CAPTURE) * pg.shots.length, i = Math.min(pg.shots.length - 1, Math.floor(k)), j = (i + 1) % pg.shots.length;
+            const a = pg.shots[i].pos, b = pg.shots[j].pos, f = k - i;
+            const q = cam.project(mix(a[0], b[0], f), mix(a[1], b[1], f), mix(a[2], b[2], f)), s = 0.32 * cam.F / q[2];
+            ctx.strokeStyle = '#f5f1f8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(q[0] - s, q[1] - s * 0.4);
+            ctx.lineTo(q[0] + s, q[1] + s * 0.4);
+            ctx.moveTo(q[0] + s, q[1] - s * 0.4);
+            ctx.lineTo(q[0] - s, q[1] + s * 0.4);
+            ctx.stroke();
+            for (const [dx, dy] of [[-1, -0.4], [1, 0.4], [1, -0.4], [-1, 0.4]]) {
+                ctx.beginPath();
+                ctx.ellipse(q[0] + dx * s, q[1] + dy * s, s * 0.5, s * 0.2, 0, 0, TAU);
+                ctx.stroke();
+            }
+            ctx.fillStyle = (t * 4) % 1 < 0.5 ? '#ff3c88' : '#ffb21c';
+            ctx.beginPath();
+            ctx.arc(q[0], q[1], 2.2, 0, TAU);
+            ctx.fill();
+        }
+        hud('images', String(Math.round(shotsTaken / pg.shots.length * 412)));
+
+        // Stages 2–3: points appear (sparse, then dense), then the mesh covers them.
+        const meshAlpha = ease(clamp((t - (PG.SPARSE + 1.5)) / 2));
+        if (t >= PG.CAPTURE && meshAlpha < 1) {
+            const frac = t < PG.SPARSE ? 0.12 * ease(clamp((t - PG.CAPTURE) / (PG.SPARSE - PG.CAPTURE))) : mix(0.12, 1, ease(clamp((t - PG.SPARSE) / 1.5)));
+            const count = Math.floor(pg.n * frac);
+            const size = t < PG.SPARSE ? 2.2 : 1.6;
+            ctx.globalAlpha = 1 - meshAlpha;
+            for (let gi = 0; gi < pg.greys.length; gi++) {
+                ctx.fillStyle = t < PG.SPARSE ? 'rgba(255,190,90,0.9)' : pg.greys[gi];
+                ctx.beginPath();
+                for (let i = 0; i < count; i++) {
+                    if (pg.grey[i] !== gi) continue;
+                    const q = cam.project(pg.xyz[i * 3], pg.xyz[i * 3 + 1], pg.xyz[i * 3 + 2]);
+                    ctx.rect(q[0] - size / 2, q[1] - size / 2, size, size);
+                }
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // Stage 4: the orthomosaic tiles in along a lawnmower path once the view is top-down.
+        const tiles = t < PG.TILT ? 0 : Math.floor(ease(clamp((t - PG.TILT) / (PG.TILES - PG.TILT))) * PG_TILES_N * PG_TILES_N + 0.0001);
+        const half = PG_TILE * PG_TILES_N / 2;
+        const tileRect = (i) => {
+            const row = Math.floor(i / PG_TILES_N), col = row % 2 ? PG_TILES_N - 1 - (i % PG_TILES_N) : i % PG_TILES_N;
+            const x0 = -half + col * PG_TILE, z0 = -half + row * PG_TILE;
+            return [[x0, 0, z0], [x0 + PG_TILE, 0, z0], [x0 + PG_TILE, 0, z0 + PG_TILE], [x0, 0, z0 + PG_TILE]];
+        };
+        if (meshAlpha > 0) drawMesh(ctx, cam, meshAlpha * out, false);
+        if (tiles > 0) {
+            ctx.save();
+            ctx.beginPath();
+            for (let i = 0; i < tiles; i++) {
+                tileRect(i).forEach((p, k) => {
+                    const q = cam.project(...p);
+                    k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
+                });
+                ctx.closePath();
+            }
+            ctx.clip();
+            ctx.globalAlpha = out;
+            drawSite(ctx, cam);
+            drawMesh(ctx, cam, out, true);
+            ctx.restore();
+
+            // Survey grid, the tile being captured, ground control points and a scale bar.
+            ctx.globalAlpha = out;
+            ctx.strokeStyle = 'rgba(255,178,28,0.22)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < PG_TILES_N * PG_TILES_N; i++) {
+                poly3(ctx, cam, tileRect(i));
+                ctx.stroke();
+            }
+            if (tiles < PG_TILES_N * PG_TILES_N) {
+                poly3(ctx, cam, tileRect(tiles));
+                ctx.fillStyle = 'rgba(255,122,26,0.25)';
+                ctx.fill();
+                ctx.strokeStyle = '#ffb21c';
+                ctx.stroke();
+            }
+            ctx.font = '600 10px ui-monospace, Consolas, monospace';
+            pg.gcps.forEach(([x, z], i) => {
+                const q = cam.project(x, 0, z);
+                ctx.strokeStyle = '#ffd84c';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(q[0], q[1], 7, 0, TAU);
+                ctx.moveTo(q[0] - 11, q[1]);
+                ctx.lineTo(q[0] + 11, q[1]);
+                ctx.moveTo(q[0], q[1] - 11);
+                ctx.lineTo(q[0], q[1] + 11);
+                ctx.stroke();
+                ctx.fillStyle = '#ffd84c';
+                ctx.fillText(`GCP ${i + 1}`, q[0] + 10, q[1] - 9);
+            });
+            const a = cam.project(-6.6, 0, 6.75), b = cam.project(-2.6, 0, 6.75);   // 4 units = 20 m
+            ctx.strokeStyle = '#f5f1f8';
+            ctx.beginPath();
+            ctx.moveTo(a[0], a[1] - 4);
+            ctx.lineTo(a[0], a[1]);
+            ctx.lineTo(b[0], b[1]);
+            ctx.lineTo(b[0], b[1] - 4);
+            ctx.stroke();
+            ctx.fillStyle = '#f5f1f8';
+            ctx.fillText('20 m', a[0], a[1] - 8);
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    addScene(document.getElementById('pg-canvas'), { draw: drawPhotogrammetry, still: PG.DENSE });
+
 })();
