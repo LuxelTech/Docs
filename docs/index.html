@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Luxel — Inspection Services</title>
+    <meta name="description"
+        content="Luxel: drone photogrammetry, aerial mapping and thermography for large commercial and residential buildings.">
+    <meta name="theme-color" content="#05040a">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://luxel.tech/">
+    <meta property="og:title" content="Luxel — Inspection Services">
+    <meta property="og:description"
+        content="Drone photogrammetry, aerial mapping and thermography for large commercial and residential buildings.">
+    <meta property="og:image" content="https://luxel.tech/assets/img/luxel-logo-1400.webp">
+    <link rel="icon" href="assets/img/favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="main.js" defer></script>
+</head>
+
+<body>
+    <div class="hud-bar" aria-hidden="true">
+        <span>LUXEL // INSPECTION SYSTEMS</span>
+        <span class="hud-bar-mid">41.88° N · 87.63° W</span>
+        <span><i class="dot"></i> ONLINE</span>
+    </div>
+
+    <main>
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-text">
+                <img class="logo" src="assets/img/luxel-logo-700.webp"
+                    srcset="assets/img/luxel-logo-700.webp 1x, assets/img/luxel-logo-1400.webp 2x" width="700"
+                    height="233" alt="Luxel Inspection Services">
+                <p class="eyebrow">Photogrammetry · Mapping · Thermography</p>
+                <h1 id="hero-title">See What's <span class="hot">Hidden.</span></h1>
+                <p class="lede">Drone photogrammetry, aerial mapping and thermography for large commercial and
+                    residential buildings. Measured data, not guesswork.</p>
+            </div>
+
+            <figure class="scene hero-scene">
+                <canvas id="hero-canvas" role="img"
+                    aria-label="A point-cloud model of a mid-rise building and a house, turning slowly while a scan plane sweeps up them and recolours each point from cold blue to a thermal heat map."></canvas>
+                <div class="hud" aria-hidden="true">
+                    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                    <div class="readout top-left">
+                        <span>THERMAL SCAN</span>
+                        <span>LAYER <b data-hud="scan">0%</b></span>
+                    </div>
+                    <div class="readout bottom-right">
+                        <span>T.MAX <b data-hud="tmax">--.-</b> °C</span>
+                        <span class="ramp"></span>
+                    </div>
+                </div>
+            </figure>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <span>© 2026 Luxel Inspection Services</span>
+        <span aria-hidden="true">END OF TRANSMISSION</span>
+    </footer>
+</body>
+
+</html>
