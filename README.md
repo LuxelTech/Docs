@@ -24,6 +24,10 @@ Then open <http://localhost:8000/>.
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 
+Links shared to luxel.tech show `docs/assets/img/social-card.png` as their preview: the hero at 1200×630. After
+changing the hero, regenerate it with `NODE_PATH=<folder holding playwright> node tools/social-card.js` (needs
+Playwright with Chromium). Unknown addresses get `docs/404.html`.
+
 ## Publishing
 
 GitHub Pages serves the `docs/` folder of `main`; a push to `main` is live within about a minute.
@@ -33,6 +37,8 @@ One-time setup for the custom domain:
 1. Repository **Settings → Pages**: deploy from branch `main`, folder `/docs`. Custom domain: `luxel.tech`
    (`docs/CNAME` already names it).
 2. DNS for `luxel.tech`: `A` records to `185.199.108.153`, `185.199.109.153`, `185.199.110.153` and
-   `185.199.111.153`, and a `www` `CNAME` to `luxeltech.github.io`.
-3. Organization **Settings → Pages**: verify the domain, so no other repository can claim it.
+   `185.199.111.153` (optionally `AAAA` records to `2606:50c0:8000::153` through `2606:50c0:8003::153`), and a
+   `www` `CNAME` to `luxeltech.github.io`.
+3. Organization **Settings → Pages**: verify the domain (a `TXT` record GitHub gives you), so no other repository
+   can claim it.
 4. Back in the repository's Pages settings, once the certificate is issued: **Enforce HTTPS**.

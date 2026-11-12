@@ -4,7 +4,7 @@ Luxel's splash page (<https://luxel.tech/>): a static GitHub Pages site, one pag
 dependencies. Luxel does drone photogrammetry, aerial mapping and thermography for large commercial and residential
 buildings; the page shows those services with animated scenes drawn in code (no photos).
 
-- **What is served:** everything in `docs/` (`index.html`, `style.css`, `main.js`, `assets/`, `CNAME`). Pages deploys
+- **What is served:** everything in `docs/` (`index.html`, `404.html`, `style.css`, `main.js`, `assets/`, `CNAME`). Pages deploys
   from `main` / `/docs`; `docs/.nojekyll` turns off Jekyll; `docs/CNAME` holds the custom domain.
 - **What a push publishes:** a push to `main` puts the site live within about a minute. There are no workflows, so a
   push uses no Actions minutes.
@@ -30,6 +30,9 @@ buildings; the page shows those services with animated scenes drawn in code (no 
   infrared one, both once. `IR_MIN`/`IR_MAX` set the colour scale and must match the `.ramp-scale` labels in
   `index.html`. Callout temperatures are read from `irTemp`. The divider (`irState.wipe`) moves by itself until the
   visitor drags the canvas, or focuses or moves the `#ir-wipe` slider; under reduced motion it stays at the slider's value.
+- **Link preview:** `og:image` is `assets/img/social-card.png`, a 1200×630 screenshot of the hero's still frame made
+  by `tools/social-card.js` (Playwright; not served). Regenerate it when the hero, logo or headline changes.
+- **404:** `docs/404.html` uses root-relative paths (`/style.css`), since Pages serves it at any unknown path.
 - **Motion:** every animation must stop under `prefers-reduced-motion: reduce`, in both `style.css` and `main.js`;
   in `main.js` each scene then draws its `still` time once.
 - **Checking:** headless Chromium (Playwright) against the preview server: screenshots at 1440×900 and 390×844, no
