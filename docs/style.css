@@ -1,0 +1,271 @@
+/* Luxel splash page. Colours follow the brand palette of the main LUXEL site. */
+:root {
+    color-scheme: dark;
+    --bg: #05040a;
+    --bg-soft: #0a0710;
+    --panel: rgba(13, 10, 19, 0.72);
+    --text: #f5f1f8;
+    --text-soft: #b8aebf;
+    --text-dim: #8a8190;
+    --line: rgba(255, 126, 55, 0.28);
+    --line-soft: rgba(255, 255, 255, 0.08);
+    --orange: #ff7a1a;
+    --amber: #ffb21c;
+    --yellow: #ffd84c;
+    --magenta: #ff3c88;
+    --violet: #8b5cf6;
+    --cyan: #5cc8ff;
+    --ironbow: linear-gradient(90deg, #140a2e, #5b1a9a 22%, #d2307a 45%, #ff7a1a 65%, #ffb21c 85%, #fff4b0);
+    --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+    --gutter: clamp(16px, 4vw, 56px);
+    --max: 1320px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--sans);
+    color: var(--text);
+    line-height: 1.55;
+    background:
+        radial-gradient(ellipse 70% 50% at 75% 20%, rgba(255, 122, 26, 0.10), transparent 70%),
+        radial-gradient(ellipse 60% 50% at 10% 90%, rgba(139, 92, 246, 0.10), transparent 70%),
+        var(--bg);
+    overflow-x: hidden;
+}
+
+/* Blueprint grid and faint scanlines over everything. */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+body::before {
+    background-image:
+        linear-gradient(var(--line-soft) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 80%);
+    opacity: 0.55;
+}
+
+body::after {
+    z-index: 50;
+    background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px);
+}
+
+a {
+    color: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 3px;
+}
+
+/* ---------- top HUD bar ---------- */
+.hud-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px var(--gutter);
+    font: 600 11px/1 var(--mono);
+    letter-spacing: 0.16em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 8px var(--orange);
+    animation: blink 2.4s steps(1) infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.25;
+    }
+}
+
+/* ---------- hero ---------- */
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center;
+    gap: clamp(24px, 4vw, 64px);
+    width: min(100% - 2 * var(--gutter), var(--max));
+    min-height: calc(100vh - 40px);
+    margin: 0 auto;
+    padding: 40px 0 64px;
+}
+
+.logo {
+    display: block;
+    width: min(100%, 460px);
+    height: auto;
+    margin: 0 0 28px -2%;
+}
+
+.eyebrow {
+    margin: 0 0 14px;
+    font: 700 12px/1.4 var(--mono);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--amber);
+}
+
+h1 {
+    margin: 0 0 20px;
+    font-size: clamp(42px, 6.4vw, 88px);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+}
+
+.hot {
+    background: linear-gradient(90deg, var(--magenta), var(--orange) 55%, var(--yellow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.lede {
+    max-width: 34em;
+    margin: 0 0 32px;
+    font-size: clamp(16px, 1.4vw, 19px);
+    color: var(--text-soft);
+}
+
+/* ---------- scenes (canvas + HUD overlay) ---------- */
+.scene {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 6 / 5;
+    background:
+        radial-gradient(ellipse at 50% 60%, rgba(92, 200, 255, 0.06), transparent 70%),
+        rgba(5, 4, 10, 0.5);
+    border: 1px solid var(--line-soft);
+}
+
+.scene canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    font: 600 11px/1.5 var(--mono);
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+}
+
+.hud b {
+    color: var(--amber);
+    font-weight: 700;
+}
+
+.corner {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 0 solid var(--orange);
+}
+
+.corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.readout {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.readout.top-left { top: 14px; left: 16px; }
+.readout.top-right { top: 14px; right: 16px; text-align: right; }
+.readout.bottom-left { bottom: 14px; left: 16px; }
+.readout.bottom-right { bottom: 14px; right: 16px; align-items: flex-end; }
+
+.ramp {
+    display: block;
+    width: 120px;
+    height: 6px;
+    margin-top: 4px;
+    background: var(--ironbow);
+}
+
+/* ---------- footer ---------- */
+.site-footer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 28px var(--gutter);
+    border-top: 1px solid var(--line-soft);
+    font: 600 11px/1.4 var(--mono);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+/* ---------- narrow screens ---------- */
+@media (max-width: 860px) {
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 0;
+        padding-top: 28px;
+    }
+
+    .hud-bar-mid {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .hud {
+        font-size: 10px;
+    }
+
+    .ramp {
+        width: 80px;
+    }
+}
+
+/* Every animation stops when the visitor asks for less motion (main.js draws still frames). */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
