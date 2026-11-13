@@ -28,6 +28,9 @@ Then open <http://localhost:8000/>.
 - **What you receive:** the deliverables beside a sample report page (illustrative data): a thermal image of a flat
   roof and a roof plan with numbered findings, and a findings table. Hovering, tapping or tabbing to a row highlights
   its marker on both images.
+- **Contact:** a "Show email address" button that reveals Luxel's address, as a mailto link with a Copy button,
+  beside a drone sending packets to an envelope. The address is stored encoded and only assembled on the click, to
+  keep it away from address harvesters; nothing on the page sends email.
 
 A rail of icons on the left edge (always visible, also on phones) jumps to each section and lights the one on screen;
 hovering or focusing an icon shows its name. The section on screen also shows "Previous" and "Next" links at its top and bottom (other sections hide theirs).

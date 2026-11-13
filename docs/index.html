@@ -50,6 +50,9 @@
             <li><a href="#deliverables" data-rail="deliverables">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h7M9 15h7M9 18h4"/></svg>
                     <span class="rail-label">Report</span></a></li>
+            <li><a href="#contact" data-rail="contact">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>
+                    <span class="rail-label">Contact</span></a></li>
         </ul>
     </nav>
 
@@ -351,6 +354,43 @@
                     </table>
                 </div>
             </article>
+            <a class="step-link next" href="#contact"><span aria-hidden="true">▾</span> Next · Contact</a>
+        </section>
+
+        <section class="service flip contact" id="contact" aria-labelledby="contact-title">
+            <a class="step-link prev" href="#deliverables"><span aria-hidden="true">▴</span> Previous · Report</a>
+            <div class="service-text">
+                <p class="eyebrow"><span class="idx">06</span> Contact</p>
+                <h2 id="contact-title">Tell us about your building.</h2>
+                <p>Send the building's address, what you would like surveyed or found, and roughly when. We reply by
+                    email.</p>
+                <div class="contact-box">
+                    <button class="contact-reveal" type="button" hidden><span aria-hidden="true">▸</span> Show email address</button>
+                    <p class="contact-address" hidden>
+                        <a class="contact-mail"></a>
+                        <button class="contact-copy" type="button">Copy</button>
+                    </p>
+                    <p class="contact-status" role="status"></p>
+                    <noscript><p class="contact-note">The email address appears here with JavaScript turned on.</p></noscript>
+                    <p class="contact-note">The address is shown only when you ask for it, to keep it away from automated
+                        address harvesters.</p>
+                </div>
+            </div>
+
+            <figure class="scene contact-scene">
+                <canvas id="contact-canvas" role="img"
+                    aria-label="A drone hovering over a building sends a stream of data packets along an arc to an envelope, which lights up with a tick when they have all arrived."></canvas>
+                <div class="hud" aria-hidden="true">
+                    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                    <div class="readout top-left">
+                        <span>CHANNEL <b>EMAIL</b></span>
+                        <span>STATUS <b data-hud="link">SENDING</b></span>
+                    </div>
+                    <div class="readout top-right">
+                        <span>PACKETS <b data-hud="packets">0</b>/12</span>
+                    </div>
+                </div>
+            </figure>
         </section>
     </main>
 
