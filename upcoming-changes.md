@@ -43,3 +43,8 @@
   receive" section of `docs/main.js`): heading "A report, not a pile of images.", the deliverables (no file formats)
   beside a sample report page: letterhead, "Sample · illustrative data" stamp, a thermal image of a flat roof and a
   roof plan with findings 1–3, and a findings table whose rows highlight their markers (hover, focus, tap).
+- **Section navigation** (`nav.rail` and the `.step-link`s in `docs/index.html`, the rail and step-link styles in
+  `docs/style.css`, the section rail at the end of `docs/main.js`): six icons on the left (Home, Photogrammetry &
+  Mapping, Thermography, Who it's for, How it works, Report), always visible, also on phones, with pop-out labels and
+  the current section lit; "▴ Previous · <section>" / "▾ Next · <section>" links at each section's top and bottom,
+  replacing the hero's "01"/"02" buttons. The link preview is unchanged.
