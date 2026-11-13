@@ -201,7 +201,13 @@ body.has-rail {
     text-decoration: none;
     color: var(--text-dim);
     transform: translateX(-50%);
-    transition: color 0.2s, border-color 0.2s;
+    transition: color 0.2s, border-color 0.2s, opacity 0.3s, visibility 0.3s;
+}
+
+/* Once main.js tracks the section on screen, only that section shows its links (hidden ones also leave the Tab order). */
+.section-spy section:not(.is-current) > .step-link {
+    opacity: 0;
+    visibility: hidden;
 }
 
 .step-link span {

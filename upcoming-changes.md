@@ -71,4 +71,5 @@ Open when this phase is planned:
   `docs/style.css`, the section rail at the end of `docs/main.js`): six icons on the left (Home, Photogrammetry &
   Mapping, Thermography, Who it's for, How it works, Report), always visible, also on phones, with pop-out labels and
   the current section lit; "▴ Previous · <section>" / "▾ Next · <section>" links at each section's top and bottom,
-  replacing the hero's "01"/"02" buttons. The link preview is unchanged.
+  replacing the hero's "01"/"02" buttons; only the section on screen shows its links (by request, so two sections'
+  links never sit side by side at a boundary). The link preview is unchanged.

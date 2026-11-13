@@ -46,7 +46,8 @@ buildings; the page shows those services with animated scenes drawn in code (no 
 - **Navigation:** `nav.rail` in `index.html` (`body.has-rail` keeps the page clear of it with `--rail` padding) links
   each section by id (`#top`, `#photogrammetry`, `#thermography`, `#who`, `#how`, `#deliverables`); its icons are
   inline SVG drawn with `currentColor`. An `IntersectionObserver` in `main.js` sets `aria-current` on the icon of the
-  section crossing the middle of the window. `.step-link.prev` / `.next` are anchor links placed absolutely in each
+  section crossing the middle of the window and `.is-current` on that section; once it runs (`body.section-spy`),
+  only the current section's step links show, so without JavaScript they all stay visible. `.step-link.prev` / `.next` are anchor links placed absolutely in each
   section's top and bottom padding; a new section needs a rail item and its neighbours' links updated.
 - **Link preview:** `og:image` is `assets/img/social-card.png`, a 1200×630 screenshot of the hero's still frame made
   by `tools/social-card.js` (Playwright; not served). Regenerate it when the hero, logo or headline changes.

@@ -1609,13 +1609,15 @@
     }
 
     // ======================================================================================
-    // Section rail: lights the icon of the section that crosses the middle of the window.
+    // Section rail: lights the icon of the section that crosses the middle of the window, and marks that
+    // section .is-current so only its Previous/Next links show.
     // ======================================================================================
     const railLinks = [...document.querySelectorAll('[data-rail]')];
     const railSpy = new IntersectionObserver((entries) => {
         for (const e of entries) {
             if (!e.isIntersecting) continue;
             for (const a of railLinks) {
+                document.getElementById(a.dataset.rail)?.classList.toggle('is-current', a.dataset.rail === e.target.id);
                 if (a.dataset.rail === e.target.id) a.setAttribute('aria-current', 'location');
                 else a.removeAttribute('aria-current');
             }
@@ -1625,5 +1627,6 @@
         const section = document.getElementById(a.dataset.rail);
         if (section) railSpy.observe(section);
     }
+    document.body.classList.add('section-spy');
 
 })();
