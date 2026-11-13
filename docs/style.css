@@ -361,6 +361,68 @@ h2 {
     cursor: pointer;
 }
 
+/* ---------- who it's for ---------- */
+.audience {
+    width: min(100% - 2 * var(--gutter), var(--max));
+    margin: 0 auto;
+    padding: clamp(56px, 9vw, 120px) 0;
+    border-top: 1px solid var(--line-soft);
+}
+
+.audience-head {
+    max-width: 46em;
+    margin-bottom: clamp(28px, 4vw, 48px);
+}
+
+.audience-head > p:not(.eyebrow),
+.audience-panel > p {
+    margin: 0 0 18px;
+    color: var(--text-soft);
+    font-size: clamp(15px, 1.2vw, 17px);
+}
+
+.audience-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(24px, 3.5vw, 48px);
+}
+
+.audience-scene {
+    aspect-ratio: 8 / 5;
+}
+
+h3 {
+    margin: 22px 0 10px;
+    font-size: clamp(22px, 2vw, 28px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+}
+
+.clients {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.clients li {
+    padding: 8px 11px;
+    border: 1px solid var(--line-soft);
+    background: var(--panel);
+    font: 600 11px/1 var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.clients li::before {
+    content: "▸ ";
+    color: var(--orange);
+}
+
 /* ---------- 404 page ---------- */
 .lost {
     display: flex;
@@ -395,7 +457,8 @@ h2 {
 @media (max-width: 860px) {
     .hero,
     .service,
-    .service.flip {
+    .service.flip,
+    .audience-grid {
         grid-template-columns: minmax(0, 1fr);
     }
 

@@ -2,14 +2,9 @@
 
 ## Phases (current and upcoming)
 
-- **Up next:** Who it's for.
-- **Then:** 1. How it works. 2. Sample deliverables.
+- **Up next:** How it works.
+- **Then:** 1. Sample deliverables.
 - **Later:** contact details (left out for now, by request).
-
-## Who it's for
-
-A section after the demos: one panel for commercial buildings (offices, warehouses, flat roofs), one for
-residential (apartment blocks, homes, associations), each with a small drawn illustration. To plan.
 
 ## How it works
 
@@ -46,3 +41,8 @@ client receives. To plan.
   in `docs/index.html`, `docs/404.html` and `.lost` in `docs/style.css`): a 1200×630 PNG link preview of the hero,
   and a 404 page. Still open, for the user: a look on a real phone and desktop browser (smoothness, the slider by
   touch).
+- **Who it's for** (`#who` in `docs/index.html`, `.audience` in `docs/style.css`, the "Who it's for" section of
+  `docs/main.js`): heading "Built for big buildings.", a commercial panel (a drone flies lanes over a warehouse roof,
+  a thermal grid fills in and shows wet insulation) and a residential panel (heat leaks glow on an apartment block
+  and houses, a crosshair labels each), with client-type lists. The hero keeps its two links. Still frames: lane 4
+  with the wet patch labelled; the window-frame leak labelled.

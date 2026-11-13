@@ -959,4 +959,252 @@
         });
     }
 
+    // ======================================================================================
+    // Who it's for: two small drawings in an oblique projection (x right, y up, z back), in units
+    // of 480 × 300 fitted to the canvas. Commercial: a drone flies lanes over a warehouse roof and a
+    // thermal grid fills in behind it, showing a wet patch. Residential: heat leaks glow on an
+    // apartment block and a row of houses while a crosshair visits each one.
+    // ======================================================================================
+    const AU_W = 480, AU_H = 300, AU_GROUND = 262;
+    const AU_LINE = 'rgba(92,200,255,0.55)', AU_FAINT = 'rgba(92,200,255,0.16)';
+    const AU_FONT = '700 {fs}px ui-monospace, Consolas, monospace';
+
+    function oblique(w, h) {
+        const k = Math.min(w / AU_W, h / AU_H), ox = (w - AU_W * k) / 2, oy = (h - AU_H * k) / 2;
+        return {
+            k,
+            fs: Math.max(9, Math.round(11 * Math.min(1, k * 1.25))),
+            P: (x, y, z = 0) => [ox + (x + z * 0.62) * k, oy + (AU_GROUND - y - z * 0.42) * k],
+        };
+    }
+
+    function poly(ctx, P, pts, fill, stroke = AU_LINE) {
+        ctx.beginPath();
+        for (const [x, y, z] of pts) ctx.lineTo(...P(x, y, z));
+        ctx.closePath();
+        if (fill) {
+            ctx.fillStyle = fill;
+            ctx.fill();
+        }
+        if (stroke) {
+            ctx.strokeStyle = stroke;
+            ctx.stroke();
+        }
+    }
+
+    // The faces of a box (x0..x1, 0..h, 0..d) this view sees: right side, top, front.
+    function auBox(ctx, P, x0, x1, h, d) {
+        poly(ctx, P, [[x1, 0, 0], [x1, 0, d], [x1, h, d], [x1, h, 0]], '#08060d');
+        poly(ctx, P, [[x0, h, 0], [x1, h, 0], [x1, h, d], [x0, h, d]], '#120e1a');
+        poly(ctx, P, [[x0, 0, 0], [x1, 0, 0], [x1, h, 0], [x0, h, 0]], '#0b0912');
+    }
+
+    // A gabled house with its gable end to the front.
+    function auHouse(ctx, P, x0, x1, h, r, d) {
+        const xm = (x0 + x1) / 2;
+        poly(ctx, P, [[x1, 0, 0], [x1, 0, d], [x1, h, d], [x1, h, 0]], '#08060d');
+        poly(ctx, P, [[x0, h, 0], [xm, h + r, 0], [xm, h + r, d], [x0, h, d]], '#120e1a');
+        poly(ctx, P, [[xm, h + r, 0], [x1, h, 0], [x1, h, d], [xm, h + r, d]], '#0f0c16');
+        poly(ctx, P, [[x0, 0, 0], [x1, 0, 0], [x1, h, 0], [xm, h + r, 0], [x0, h, 0]], '#0b0912');
+    }
+
+    // An outlined rectangle on the front plane (z = 0).
+    const auRect = (ctx, P, x, y, w, h, stroke = AU_FAINT) =>
+        poly(ctx, P, [[x, y, 0], [x + w, y, 0], [x + w, y + h, 0], [x, y + h, 0]], null, stroke);
+
+    function auGround(ctx, P) {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = AU_FAINT;
+        ctx.beginPath();
+        for (let z = 0; z <= 120; z += 40) {
+            ctx.moveTo(...P(-40, 0, z));
+            ctx.lineTo(...P(AU_W, 0, z));
+        }
+        for (let x = 0; x <= AU_W; x += 40) {
+            ctx.moveTo(...P(x, 0, 0));
+            ctx.lineTo(...P(x, 0, 120));
+        }
+        ctx.stroke();
+    }
+
+    // A pulsing crosshair ring with a label box beside it, as in the thermography callouts.
+    function auCallout(ctx, x, y, text, fs, pulse, k, w) {
+        ctx.strokeStyle = `rgba(255,255,255,${0.9 - pulse * 0.8})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, (6 + pulse * 12) * Math.max(0.6, k), 0, TAU);
+        ctx.stroke();
+        ctx.font = AU_FONT.replace('{fs}', fs);
+        ctx.textBaseline = 'middle';
+        const tw = ctx.measureText(text).width, lx = clamp(x - tw / 2 - 6, 4, w - tw - 16), ly = y - 34 * Math.max(0.7, k);
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 6 * Math.max(0.6, k));
+        ctx.lineTo(x, ly + fs * 0.8);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(5,4,10,0.86)';
+        ctx.fillRect(lx, ly - fs * 0.8, tw + 12, fs * 1.6);
+        ctx.fillStyle = '#fff4b0';
+        ctx.fillText(text, lx + 6, ly);
+    }
+
+    // ---------- commercial: an office block and a warehouse whose roof is surveyed ----------
+    const COM_ROOF = { x0: 140, x1: 390, h: 70, d: 110, cols: 10, rows: 5 };
+    const COM_LANE = 1.6;                                   // seconds per lane
+    const COM_HOLD = 2.6, COM_FADE = 0.8;
+    const COM_PERIOD = COM_ROOF.rows * COM_LANE + COM_HOLD + COM_FADE;
+    const COM_WET = { col: 6, row: 2 };                     // the cell at the wet patch's centre
+    const comCells = (() => {
+        const rand = seeded(11), out = [];
+        const cw = (COM_ROOF.x1 - COM_ROOF.x0) / COM_ROOF.cols, cd = COM_ROOF.d / COM_ROOF.rows;
+        const wx = COM_ROOF.x0 + (COM_WET.col + 0.5) * cw, wz = (COM_WET.row + 0.5) * cd;
+        for (let r = 0; r < COM_ROOF.rows; r++) {
+            for (let c = 0; c < COM_ROOF.cols; c++) {
+                const x = COM_ROOF.x0 + c * cw, z = r * cd;
+                const v = 0.22 + rand() * 0.08 + 0.62 * blob2(x + cw / 2, z + cd / 2, wx, wz, 42, 30);
+                out.push({ c, r, x, z, cw, cd, v });
+            }
+        }
+        return out;
+    })();
+
+    function drawCommercial(ctx, w, h, t) {
+        const { k, fs, P } = oblique(w, h);
+        const R = COM_ROOF, p = t % COM_PERIOD, flying = p < R.rows * COM_LANE;
+        const lane = Math.min(R.rows - 1, Math.floor(p / COM_LANE)), u = flying ? (p % COM_LANE) / COM_LANE : 1;
+        const fade = clamp((p - R.rows * COM_LANE - COM_HOLD) / COM_FADE);
+        const lx = lane % 2 ? mix(R.x1 + 10, R.x0 - 10, u) : mix(R.x0 - 10, R.x1 + 10, u);
+        const cd = R.d / R.rows;
+        const dz = (lane + 0.5) * cd + (lane < R.rows - 1 ? cd * ease(clamp((u - 0.88) / 0.12)) : 0);
+        const done = (cell) => !flying || cell.r < lane ||
+            (cell.r === lane && (lane % 2 ? cell.x + cell.cw / 2 > lx : cell.x + cell.cw / 2 < lx));
+
+        ctx.lineWidth = 1;
+        auGround(ctx, P);
+        auBox(ctx, P, 30, 120, 170, 60);                     // office block
+        for (let f = 0; f < 9; f++) {
+            for (let c = 0; c < 4; c++) auRect(ctx, P, 38 + c * 20.5, 18 + f * 17, 12, 9);
+        }
+        auBox(ctx, P, R.x0, R.x1, R.h, R.d);                 // warehouse and its loading doors
+        for (let i = 0; i < 5; i++) auRect(ctx, P, 160 + i * 44, 0, 30, 38);
+
+        // Thermal cells on the roof, filled in behind the drone.
+        const alpha = 0.88 * (1 - fade);
+        if (alpha > 0) {
+            for (const cell of comCells) {
+                if (!done(cell)) continue;
+                poly(ctx, P, [
+                    [cell.x + 0.8, R.h, cell.z + 0.8], [cell.x + cell.cw - 0.8, R.h, cell.z + 0.8],
+                    [cell.x + cell.cw - 0.8, R.h, cell.z + cell.cd - 0.8], [cell.x + 0.8, R.h, cell.z + cell.cd - 0.8],
+                ], css(ironbow(cell.v), alpha), null);
+            }
+        }
+        const wet = comCells[COM_WET.row * R.cols + COM_WET.col];
+        hud('lane', flying ? String(lane + 1) : String(R.rows));
+
+        // The drone, its camera footprint on the roof, and a blinking light.
+        if (flying) {
+            const [sx, sy] = P(lx, R.h + 62, dz);
+            const foot = [[lx - 14, R.h, dz - cd / 2], [lx + 14, R.h, dz - cd / 2], [lx + 14, R.h, dz + cd / 2], [lx - 14, R.h, dz + cd / 2]];
+            poly(ctx, P, foot, 'rgba(255,178,28,0.10)', 'rgba(255,178,28,0.6)');
+            ctx.beginPath();
+            for (const [x, y, z] of foot) {
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(...P(x, y, z));
+            }
+            ctx.stroke();
+            const s = Math.max(0.7, k);
+            ctx.strokeStyle = '#ffb21c';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(sx - 9 * s, sy - 3 * s); ctx.lineTo(sx + 9 * s, sy + 3 * s);
+            ctx.moveTo(sx + 9 * s, sy - 3 * s); ctx.lineTo(sx - 9 * s, sy + 3 * s);
+            for (const [ax, ay] of [[-9, -3], [9, 3], [9, -3], [-9, 3]]) {
+                ctx.moveTo(sx + ax * s + 4.5 * s, sy + ay * s);
+                ctx.ellipse(sx + ax * s, sy + ay * s, 4.5 * s, 1.6 * s, 0, 0, TAU);
+            }
+            ctx.stroke();
+            ctx.fillStyle = (t * 2) % 1 < 0.5 ? '#ff3c88' : 'rgba(255,60,136,0.3)';
+            ctx.fillRect(sx - 1.5 * s, sy - 1.5 * s, 3 * s, 3 * s);
+        }
+
+        if (done(wet) && fade < 1) {
+            const [cx, cy] = P(wet.x + wet.cw / 2, R.h, wet.z + wet.cd / 2);
+            ctx.globalAlpha = 1 - fade;
+            auCallout(ctx, cx, cy, 'WET INSULATION +3.8 °C', fs, reduce.matches ? 0.5 : (t * 0.8) % 1, k, w);
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    addScene(document.getElementById('com-canvas'), { draw: drawCommercial, still: 3 * COM_LANE + 0.6 * COM_LANE });
+
+    // ---------- residential: an apartment block and a row of houses with heat leaks ----------
+    const RES_HOUSES = [190, 262, 334].map((x) => ({ x0: x, x1: x + 60, h: 55, r: 32, d: 70 }));
+    const RES_LEAKS = [
+        { at: [76, 132, 0], rx: 13, ry: 11, label: 'WINDOW FRAME 14.2 °C' },
+        { at: [97, 72, 0], rx: 46, ry: 6, label: 'THERMAL BRIDGE 11.8 °C' },
+        { at: [379, 55 + 16, 35], rx: 16, ry: 12, label: 'ROOF INSULATION 9.6 °C' },
+        { at: [292, 14, 0], rx: 9, ry: 18, label: 'DOOR DRAUGHT 16.4 °C' },
+    ];
+    const RES_STEP = 2.6, RES_MOVE = 0.7;                   // seconds per leak, of which moving
+
+    function drawResidential(ctx, w, h, t) {
+        const { k, fs, P } = oblique(w, h);
+        ctx.lineWidth = 1;
+        auGround(ctx, P);
+        auBox(ctx, P, 24, 170, 180, 55);                    // apartment block: 7 floors over an entrance
+        for (let f = 0; f < 7; f++) {
+            for (let c = 0; c < 5; c++) auRect(ctx, P, 34 + c * 27.5, 34 + f * 20.5, 16, 12);
+            auRect(ctx, P, 24, 30 + f * 20.5, 146, 1.5, 'rgba(92,200,255,0.10)');
+        }
+        auRect(ctx, P, 84, 0, 26, 24);
+        for (const H of RES_HOUSES) {
+            auHouse(ctx, P, H.x0, H.x1, H.h, H.r, H.d);
+            auRect(ctx, P, H.x0 + 23, 0, 14, 26);
+            auRect(ctx, P, H.x0 + 7, 30, 12, 12);
+            auRect(ctx, P, H.x1 - 19, 30, 12, 12);
+        }
+
+        // Heat leaks: soft ironbow glows that breathe out of step with each other.
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        RES_LEAKS.forEach((L, i) => {
+            const [x, y] = P(...L.at), pulse = reduce.matches ? 0.85 : 0.75 + 0.25 * Math.sin(t * 1.8 + i * 1.7);
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(L.rx * k, L.ry * k);
+            const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+            g.addColorStop(0, css(ironbow(0.95), 0.9 * pulse));
+            g.addColorStop(0.35, css(ironbow(0.7), 0.6 * pulse));
+            g.addColorStop(0.7, css(ironbow(0.4), 0.3 * pulse));
+            g.addColorStop(1, css(ironbow(0.2), 0));
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(0, 0, 1, 0, TAU);
+            ctx.fill();
+            ctx.restore();
+        });
+        ctx.restore();
+
+        // A crosshair moves from leak to leak and labels each.
+        const n = RES_LEAKS.length, step = t / RES_STEP, i = Math.floor(step) % n, q = (step % 1) * RES_STEP;
+        const from = P(...RES_LEAKS[(i + n - 1) % n].at), to = P(...RES_LEAKS[i].at);
+        const m = ease(clamp(q / RES_MOVE)), cx = mix(from[0], to[0], m), cy = mix(from[1], to[1], m);
+        hud('leaks', String(i + 1));
+        ctx.strokeStyle = '#ffb21c';
+        ctx.lineWidth = 1.5;
+        const s = 9 * Math.max(0.7, k);
+        ctx.beginPath();
+        for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+            ctx.moveTo(cx + a * s, cy + b * s * 0.4);
+            ctx.lineTo(cx + a * s, cy + b * s);
+            ctx.lineTo(cx + a * s * 0.4, cy + b * s);
+        }
+        ctx.stroke();
+        if (q >= RES_MOVE) auCallout(ctx, cx, cy, RES_LEAKS[i].label, fs, reduce.matches ? 0.5 : ((q - RES_MOVE) * 0.8) % 1, k, w);
+    }
+
+    addScene(document.getElementById('res-canvas'), { draw: drawResidential, still: RES_MOVE + 0.8 });
+
 })();

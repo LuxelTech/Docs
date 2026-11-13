@@ -30,6 +30,10 @@ buildings; the page shows those services with animated scenes drawn in code (no 
   infrared one, both once. `IR_MIN`/`IR_MAX` set the colour scale and must match the `.ramp-scale` labels in
   `index.html`. Callout temperatures are read from `irTemp`. The divider (`irState.wipe`) moves by itself until the
   visitor drags the canvas, or focuses or moves the `#ir-wipe` slider; under reduced motion it stays at the slider's value.
+- **Who it's for:** `oblique()` fits a 480 × 300 unit drawing to the canvas in an oblique projection (x right, y up,
+  z back); `auBox`, `auHouse` and `auRect` draw blueprint-line buildings, `auCallout` a ring with a label. The
+  commercial scene's roof grid (`comCells`) fills in lane by lane behind the drone (`COM_*` timings); the residential
+  scene's glows and crosshair stops come from `RES_LEAKS`. HUD readouts: `lane`, `leaks`.
 - **Link preview:** `og:image` is `assets/img/social-card.png`, a 1200×630 screenshot of the hero's still frame made
   by `tools/social-card.js` (Playwright; not served). Regenerate it when the hero, logo or headline changes.
 - **404:** `docs/404.html` uses root-relative paths (`/style.css`), since Pages serves it at any unknown path.

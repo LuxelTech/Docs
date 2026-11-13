@@ -21,6 +21,8 @@ Then open <http://localhost:8000/>.
 - **Thermography:** what the service finds, beside a building facade split into a visible-light and an infrared view,
   with labelled problems (missing insulation, air leakage, moisture, an overheating breaker). Visitors drag the
   divider, or use the slider under it.
+- **Who it's for:** a commercial panel (a drone surveys a warehouse roof and finds wet insulation) and a residential
+  panel (heat leaks on an apartment block and a row of houses), each with the client types Luxel works for.
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 
