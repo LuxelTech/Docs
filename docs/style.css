@@ -20,6 +20,7 @@
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
     --gutter: clamp(16px, 4vw, 56px);
     --max: 1320px;
+    --rail: 56px;
 }
 
 *,
@@ -78,6 +79,149 @@ a {
     outline-offset: 3px;
 }
 
+/* The section rail sits in a strip on the left; the page keeps clear of it. */
+body.has-rail {
+    padding-left: var(--rail);
+}
+
+/* ---------- section rail ---------- */
+.rail {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    z-index: 40;
+    width: var(--rail);
+    transform: translateY(-50%);
+}
+
+.rail ul {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 10px 0;
+    list-style: none;
+    border: 1px solid var(--line-soft);
+    border-left: 0;
+    background: rgba(10, 7, 16, 0.82);
+    backdrop-filter: blur(6px);
+}
+
+.rail a {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 44px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.rail svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.rail a:hover,
+.rail a:focus-visible {
+    color: var(--text);
+}
+
+.rail a[aria-current] {
+    color: var(--orange);
+}
+
+.rail a[aria-current]::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: 2px;
+    background: var(--orange);
+    box-shadow: 0 0 8px var(--orange);
+}
+
+.rail a:focus-visible {
+    outline-offset: -4px;
+}
+
+/* The label pops out to the right of its icon on hover or keyboard focus. */
+.rail-label {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 6px);
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    background: rgba(10, 7, 16, 0.94);
+    font: 700 11px/1 var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-8px, -50%);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.rail a:hover .rail-label,
+.rail a:focus-visible .rail-label {
+    opacity: 1;
+    transform: translate(0, -50%);
+}
+
+/* ---------- next / previous section links ---------- */
+.hero,
+.service,
+.audience,
+.how {
+    position: relative;
+}
+
+.step-link {
+    position: absolute;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 8px 14px;
+    border: 1px solid var(--line-soft);
+    background: var(--panel);
+    font: 700 11px/1.2 var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--text-dim);
+    transform: translateX(-50%);
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.step-link span {
+    color: var(--orange);
+    font-size: 13px;
+}
+
+.step-link:hover {
+    color: var(--text);
+    border-color: var(--orange);
+}
+
+.step-link.prev {
+    top: clamp(12px, 2.4vw, 36px);
+}
+
+.step-link.next {
+    bottom: clamp(12px, 2.4vw, 36px);
+}
+
 /* ---------- top HUD bar ---------- */
 .hud-bar {
     display: flex;
@@ -116,7 +260,7 @@ a {
     width: min(100% - 2 * var(--gutter), var(--max));
     min-height: calc(100vh - 40px);
     margin: 0 auto;
-    padding: 40px 0 64px;
+    padding: 40px 0 clamp(84px, 9vw, 120px);
 }
 
 .logo {
@@ -738,6 +882,30 @@ h3 {
 }
 
 @media (max-width: 480px) {
+    :root {
+        --rail: 44px;
+    }
+
+    .rail a {
+        height: 40px;
+    }
+
+    .rail svg {
+        width: 21px;
+        height: 21px;
+    }
+
+    .hud-bar {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+    }
+
+    .step-link {
+        padding: 7px 10px;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+    }
+
     .hud {
         font-size: 10px;
     }

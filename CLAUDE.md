@@ -43,6 +43,11 @@ buildings; the page shows those services with animated scenes drawn in code (no 
   temperature (0–1 on the ironbow ramp), sampled once into `repIR`; `REP_FINDINGS` places the markers, in the order
   of the table's `data-finding` rows. `setFinding(i)` (row hover, focus, tap) highlights a row and its markers and
   redraws both canvases, so it also works under reduced motion. All report data is invented and labelled as a sample.
+- **Navigation:** `nav.rail` in `index.html` (`body.has-rail` keeps the page clear of it with `--rail` padding) links
+  each section by id (`#top`, `#photogrammetry`, `#thermography`, `#who`, `#how`, `#deliverables`); its icons are
+  inline SVG drawn with `currentColor`. An `IntersectionObserver` in `main.js` sets `aria-current` on the icon of the
+  section crossing the middle of the window. `.step-link.prev` / `.next` are anchor links placed absolutely in each
+  section's top and bottom padding; a new section needs a rail item and its neighbours' links updated.
 - **Link preview:** `og:image` is `assets/img/social-card.png`, a 1200×630 screenshot of the hero's still frame made
   by `tools/social-card.js` (Playwright; not served). Regenerate it when the hero, logo or headline changes.
 - **404:** `docs/404.html` uses root-relative paths (`/style.css`), since Pages serves it at any unknown path.

@@ -11,7 +11,8 @@ const out = path.join(root, 'assets', 'img', 'social-card.png');
 const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.webp': 'image/webp', '.png': 'image/png' };
 
 const CARD_CSS = `
-    body::after, .hero-links, .lede, .service, .site-footer { display: none; }
+    body::after, .rail, .step-link, .lede, .service, .audience, .how, .site-footer { display: none; }
+    body.has-rail { padding-left: 0; }
     .hero { min-height: 590px; padding: 0; gap: 40px; }
     .logo { width: 400px; margin-bottom: 22px; }
     h1 { font-size: 76px; }

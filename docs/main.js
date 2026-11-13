@@ -1608,4 +1608,22 @@
         row.addEventListener('click', () => row.focus());
     }
 
+    // ======================================================================================
+    // Section rail: lights the icon of the section that crosses the middle of the window.
+    // ======================================================================================
+    const railLinks = [...document.querySelectorAll('[data-rail]')];
+    const railSpy = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            for (const a of railLinks) {
+                if (a.dataset.rail === e.target.id) a.setAttribute('aria-current', 'location');
+                else a.removeAttribute('aria-current');
+            }
+        }
+    }, { rootMargin: '-50% 0px -50% 0px' });
+    for (const a of railLinks) {
+        const section = document.getElementById(a.dataset.rail);
+        if (section) railSpy.observe(section);
+    }
+
 })();

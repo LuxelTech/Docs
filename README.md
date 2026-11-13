@@ -14,7 +14,7 @@ Then open <http://localhost:8000/>.
 
 ## What is on the page
 
-- **Hero:** the Luxel logo, "See What's Hidden." and a point-cloud building that a scan plane sweeps up, turning each
+- **Hero (Home):** the Luxel logo, "See What's Hidden." and a point-cloud building that a scan plane sweeps up, turning each
   point into its thermal colour.
 - **Photogrammetry & Mapping:** what the service delivers, beside a drone that circles a building taking photos; the
   photos become a point cloud, a 3D model, and then a top-down orthomosaic map of the site.
@@ -28,6 +28,9 @@ Then open <http://localhost:8000/>.
 - **What you receive:** the deliverables beside a sample report page (illustrative data): a thermal image of a flat
   roof and a roof plan with numbered findings, and a findings table. Hovering, tapping or tabbing to a row highlights
   its marker on both images.
+
+A rail of icons on the left edge (always visible, also on phones) jumps to each section and lights the one on screen;
+hovering or focusing an icon shows its name. Each section also has "Previous" and "Next" links at its top and bottom.
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 
