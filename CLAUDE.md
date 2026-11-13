@@ -34,6 +34,10 @@ buildings; the page shows those services with animated scenes drawn in code (no 
   z back); `auBox`, `auHouse` and `auRect` draw blueprint-line buildings, `auCallout` a ring with a label. The
   commercial scene's roof grid (`comCells`) fills in lane by lane behind the drone (`COM_*` timings); the residential
   scene's glows and crosshair stops come from `RES_LEAKS`. HUD readouts: `lane`, `leaks`.
+- **How it works:** `addHowStep(id, i, drawIcon)` registers each step's canvas; all four share the page clock
+  (`performance.now()`, `HOW_STEP` s per step), so only step `i` animates (`u` 0→1) while the others draw their
+  finished state, dimmed by `.how-steps.is-running .how-step:not(.is-active)`. It sets each `.how-bar`'s `--fill`.
+  Icons draw in 200 × 150 units. Checking: an icon changes only during its own step, so watch a full cycle (4 × `HOW_STEP`).
 - **Link preview:** `og:image` is `assets/img/social-card.png`, a 1200×630 screenshot of the hero's still frame made
   by `tools/social-card.js` (Playwright; not served). Regenerate it when the hero, logo or headline changes.
 - **404:** `docs/404.html` uses root-relative paths (`/style.css`), since Pages serves it at any unknown path.

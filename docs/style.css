@@ -361,20 +361,21 @@ h2 {
     cursor: pointer;
 }
 
-/* ---------- who it's for ---------- */
-.audience {
+/* ---------- who it's for, how it works ---------- */
+.audience,
+.how {
     width: min(100% - 2 * var(--gutter), var(--max));
     margin: 0 auto;
     padding: clamp(56px, 9vw, 120px) 0;
     border-top: 1px solid var(--line-soft);
 }
 
-.audience-head {
+.section-head {
     max-width: 46em;
     margin-bottom: clamp(28px, 4vw, 48px);
 }
 
-.audience-head > p:not(.eyebrow),
+.section-head > p:not(.eyebrow),
 .audience-panel > p {
     margin: 0 0 18px;
     color: var(--text-soft);
@@ -423,6 +424,67 @@ h3 {
     color: var(--orange);
 }
 
+.how-steps {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 28px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.how-step {
+    position: relative;
+    padding-top: 16px;
+}
+
+/* A bar over each step that fills while the step is active (main.js sets --fill). */
+.how-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--line-soft);
+}
+
+.how-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--orange), var(--amber));
+    box-shadow: 0 0 8px var(--orange);
+    transform: scaleX(var(--fill, 1));
+    transform-origin: left;
+}
+
+.how-scene {
+    aspect-ratio: 4 / 3;
+    transition: opacity 0.4s;
+}
+
+.how-steps.is-running .how-step:not(.is-active) .how-scene {
+    opacity: 0.45;
+}
+
+.how-num {
+    margin: 18px 0 0;
+    font: 700 11px/1.4 var(--mono);
+    letter-spacing: 0.18em;
+    color: var(--amber);
+}
+
+.how-step h3 {
+    margin: 6px 0 8px;
+    font-size: clamp(19px, 1.6vw, 22px);
+}
+
+.how-step > p:last-child {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 15px;
+}
+
 /* ---------- 404 page ---------- */
 .lost {
     display: flex;
@@ -454,6 +516,19 @@ h3 {
 }
 
 /* ---------- narrow screens ---------- */
+@media (max-width: 1100px) {
+    .how-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 40px;
+    }
+}
+
+@media (max-width: 560px) {
+    .how-steps {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 860px) {
     .hero,
     .service,

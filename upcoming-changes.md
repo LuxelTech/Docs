@@ -2,14 +2,8 @@
 
 ## Phases (current and upcoming)
 
-- **Up next:** How it works.
-- **Then:** 1. Sample deliverables.
+- **Up next:** Sample deliverables.
 - **Later:** contact details (left out for now, by request).
-
-## How it works
-
-A four-step strip (plan the flight, fly and capture, process, deliver the report), each with a small animated icon
-in the HUD style. To plan.
 
 ## Sample deliverables
 
@@ -46,3 +40,7 @@ client receives. To plan.
   a thermal grid fills in and shows wet insulation) and a residential panel (heat leaks glow on an apartment block
   and houses, a crosshair labels each), with client-type lists. The hero keeps its two links. Still frames: lane 4
   with the wet patch labelled; the window-frame leak labelled.
+- **How it works** (`#how` in `docs/index.html`, `.how-*` in `docs/style.css`, the "How it works" section of
+  `docs/main.js`): heading "From flight plan to report.", four steps (plan the flight, fly and capture, process,
+  deliver the report) with animated icons, one active at a time with a filling bar, the others dimmed in their
+  finished state; no durations. Still: every icon finished, none dimmed.
