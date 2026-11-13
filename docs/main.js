@@ -1207,4 +1207,224 @@
 
     addScene(document.getElementById('res-canvas'), { draw: drawResidential, still: RES_MOVE + 0.8 });
 
+    // ======================================================================================
+    // How it works: four step icons, each on its own canvas in units of 200 × 150. One step is
+    // active at a time on a shared clock (the page's, so the steps stay in step while scrolling);
+    // its bar fills and its icon animates from u = 0 to 1, while the others rest dimmed in their
+    // finished state (u = 1). Under reduced motion every icon shows its finished state.
+    // ======================================================================================
+    const HOW_STEP = 3.4;                                   // seconds per step
+    const howList = document.querySelector('.how-steps');
+
+    function addHowStep(id, i, drawIcon) {
+        const canvas = document.getElementById(id), step = canvas && canvas.closest('.how-step');
+        const bar = step && step.querySelector('.how-bar');
+        addScene(canvas, {
+            still: 0,
+            draw(ctx, w, h) {
+                const still = reduce.matches, T = performance.now() / 1000;
+                const cur = Math.floor(T / HOW_STEP) % 4, active = !still && cur === i;
+                const u = active ? (T % HOW_STEP) / HOW_STEP : 1;
+                howList.classList.toggle('is-running', !still);
+                step.classList.toggle('is-active', active);
+                bar.style.setProperty('--fill', still || i < cur ? 1 : active ? u.toFixed(3) : 0);
+                const k = Math.min(w / 200, h / 150);
+                ctx.save();
+                ctx.translate((w - 200 * k) / 2, (h - 150 * k) / 2);
+                ctx.scale(k, k);
+                ctx.lineWidth = 1 / k;
+                drawIcon(ctx, clamp(u / 0.8), active ? T : 0, k);
+                ctx.restore();
+            },
+        });
+    }
+
+    function polyline(ctx, pts) {
+        ctx.beginPath();
+        for (const [x, y] of pts) ctx.lineTo(x, y);
+    }
+
+    // 01: a top-down site with an L-shaped building and a lawnmower flight path drawing itself.
+    const HOW_PATH = (() => {
+        const pts = [];
+        for (let i = 0; i < 6; i++) {
+            const y = 36 + i * 16;
+            pts.push(i % 2 ? [160, y] : [40, y], i % 2 ? [40, y] : [160, y]);
+        }
+        return pts;
+    })();
+
+    addHowStep('how-plan', 0, (ctx, e, T, k) => {
+        ctx.strokeStyle = AU_FAINT;
+        ctx.beginPath();
+        for (let x = 20; x <= 180; x += 20) { ctx.moveTo(x, 16); ctx.lineTo(x, 134); }
+        for (let y = 16; y <= 134; y += 20) { ctx.moveTo(18, y); ctx.lineTo(182, y); }
+        ctx.stroke();
+        polyline(ctx, [[60, 45], [140, 45], [140, 80], [115, 80], [115, 110], [60, 110]]);
+        ctx.closePath();
+        ctx.fillStyle = '#120e1a';
+        ctx.fill();
+        ctx.strokeStyle = AU_LINE;
+        ctx.stroke();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(255,178,28,0.4)';
+        ctx.strokeRect(32, 26, 136, 100);
+        ctx.setLineDash([]);
+
+        // The path up to length e of the whole, with a waypoint at every corner reached.
+        let left = e * HOW_PATH.reduce((sum, p, j) => sum + (j ? Math.hypot(p[0] - HOW_PATH[j - 1][0], p[1] - HOW_PATH[j - 1][1]) : 0), 0);
+        const drawn = [HOW_PATH[0]];
+        for (let j = 1; j < HOW_PATH.length && left > 0; j++) {
+            const a = HOW_PATH[j - 1], b = HOW_PATH[j], len = Math.hypot(b[0] - a[0], b[1] - a[1]), f = Math.min(1, left / len);
+            drawn.push([mix(a[0], b[0], f), mix(a[1], b[1], f)]);
+            left -= len;
+        }
+        polyline(ctx, drawn);
+        ctx.strokeStyle = '#ffb21c';
+        ctx.lineWidth = 1.4 / k;
+        ctx.stroke();
+        ctx.fillStyle = '#ffb21c';
+        drawn.slice(0, -1).forEach(([x, y]) => ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6));
+        const [hx, hy] = drawn[drawn.length - 1];
+        ctx.fillStyle = '#ff3c88';
+        ctx.beginPath();
+        ctx.arc(hx, hy, 2.6, 0, TAU);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,60,136,0.5)';
+        ctx.beginPath();
+        ctx.arc(hx, hy, 5 + 2 * Math.sin(T * 6), 0, TAU);
+        ctx.stroke();
+    });
+
+    // 02: a drone over a building, flashing as it takes photos, with an image counter.
+    addHowStep('how-fly', 1, (ctx, e, T, k) => {
+        ctx.strokeStyle = AU_FAINT;
+        ctx.beginPath();
+        ctx.moveTo(10, 130);
+        ctx.lineTo(190, 130);
+        ctx.stroke();
+        ctx.fillStyle = '#0b0912';
+        ctx.fillRect(50, 72, 100, 58);
+        ctx.strokeStyle = AU_LINE;
+        ctx.strokeRect(50, 72, 100, 58);
+        ctx.strokeStyle = AU_FAINT;
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) ctx.strokeRect(58 + c * 15.4, 80 + r * 15, 8, 8);
+
+        const x = T ? 100 + 46 * Math.sin(T * 1.4) : 100, y = 36 + (T ? Math.sin(T * 3) * 1.5 : 0);
+        const flash = T && (T / 0.42) % 1 < 0.2;
+        ctx.beginPath();
+        ctx.moveTo(x, y + 4);
+        ctx.lineTo(x - 22, 72);
+        ctx.lineTo(x + 22, 72);
+        ctx.closePath();
+        ctx.fillStyle = flash ? 'rgba(255,244,176,0.32)' : 'rgba(255,178,28,0.08)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,178,28,0.55)';
+        ctx.stroke();
+        ctx.strokeStyle = '#ffb21c';
+        ctx.lineWidth = 1.4 / k;
+        ctx.beginPath();
+        ctx.moveTo(x - 12, y); ctx.lineTo(x + 12, y);
+        for (const ax of [-12, 12]) {
+            ctx.moveTo(x + ax + 6, y - 3);
+            ctx.ellipse(x + ax, y - 3, 6, 1.8, 0, 0, TAU);
+        }
+        ctx.stroke();
+        ctx.fillStyle = flash ? '#fff4b0' : '#ff3c88';
+        ctx.fillRect(x - 2, y, 4, 4);
+
+        ctx.font = '700 9px ui-monospace, Consolas, monospace';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = 'rgba(184,174,191,0.9)';
+        ctx.fillText('IMG', 10, 16);
+        ctx.fillStyle = '#ffb21c';
+        ctx.fillText(String(Math.round(e * 480)).padStart(4, '0'), 32, 16);
+    });
+
+    // 03: scattered points drift into a house's outline, then the shape fills with thermal colour.
+    const HOW_HOUSE = [[60, 128], [140, 128], [140, 78], [100, 46], [60, 78]];
+    const howPoints = (() => {
+        const rand = seeded(23), pts = [];
+        const inside = (x, y) => x > 60 && x < 140 && y < 128 && (y > 78 || y > 78 - (40 - Math.abs(x - 100)) * 0.8);
+        while (pts.length < 150) {
+            const tx = 60 + rand() * 80, ty = 46 + rand() * 82;
+            if (!inside(tx, ty)) continue;
+            pts.push({ sx: 8 + rand() * 184, sy: 8 + rand() * 134, tx, ty, delay: rand() * 0.35, v: 0.25 + 0.6 * blob2(tx, ty, 82, 70, 22) + rand() * 0.08 });
+        }
+        return pts;
+    })();
+
+    addHowStep('how-process', 2, (ctx, e) => {
+        const fill = clamp((e - 0.75) / 0.25);
+        if (fill > 0) {
+            const g = ctx.createLinearGradient(0, 46, 0, 128);
+            g.addColorStop(0, css(ironbow(0.8), 0.55 * fill));
+            g.addColorStop(1, css(ironbow(0.3), 0.55 * fill));
+            polyline(ctx, HOW_HOUSE);
+            ctx.closePath();
+            ctx.fillStyle = g;
+            ctx.fill();
+            ctx.strokeStyle = css([92, 200, 255], 0.55 * fill);
+            ctx.stroke();
+        }
+        for (const p of howPoints) {
+            const m = ease(clamp((e - p.delay) / 0.45));
+            ctx.fillStyle = m < 1 ? 'rgba(92,200,255,0.75)' : css(ironbow(p.v), 0.95);
+            ctx.fillRect(mix(p.sx, p.tx, m) - 0.9, mix(p.sy, p.ty, m) - 0.9, 1.8, 1.8);
+        }
+    });
+
+    // 04: a report page: a thermal thumbnail with a marked finding, text lines, a check mark.
+    addHowStep('how-report', 3, (ctx, e, T, k) => {
+        ctx.fillStyle = '#0f0c16';
+        ctx.fillRect(62, 10, 76, 132);
+        ctx.strokeStyle = AU_LINE;
+        ctx.strokeRect(62, 10, 76, 132);
+        ctx.fillStyle = '#ff7a1a';
+        ctx.fillRect(70, 18, 16, 4);
+        ctx.fillStyle = 'rgba(184,174,191,0.4)';
+        ctx.fillRect(104, 19, 26, 2);
+
+        const shown = clamp((e - 0.05) / 0.3);
+        if (shown > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(70, 30, 60, 40 * shown);
+            ctx.clip();
+            const g = ctx.createLinearGradient(70, 70, 130, 30);
+            g.addColorStop(0, css(ironbow(0.15)));
+            g.addColorStop(0.6, css(ironbow(0.4)));
+            g.addColorStop(1, css(ironbow(0.3)));
+            ctx.fillStyle = g;
+            ctx.fillRect(70, 30, 60, 40);
+            const hot = ctx.createRadialGradient(108, 46, 0, 108, 46, 13);
+            hot.addColorStop(0, css(ironbow(0.95)));
+            hot.addColorStop(1, css(ironbow(0.45), 0));
+            ctx.fillStyle = hot;
+            ctx.fillRect(70, 30, 60, 40);
+            ctx.restore();
+        }
+        if (shown >= 1) {
+            ctx.strokeStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(108, 46, 7, 0, TAU);
+            ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(184,174,191,0.55)';
+        [56, 48, 52, 36, 44].forEach((len, j) => {
+            const f = clamp((e - 0.35 - j * 0.07) / 0.12);
+            if (f > 0) ctx.fillRect(70, 80 + j * 8, len * f, 2.2);
+        });
+        const c = clamp((e - 0.8) / 0.2);
+        if (c > 0) {
+            ctx.strokeStyle = '#ffb21c';
+            ctx.lineWidth = 1.6 / k;
+            ctx.beginPath();
+            ctx.arc(120, 128, 7, 0, TAU);
+            ctx.stroke();
+            polyline(ctx, [[116.5, 128], [119, 131], [124, 125]].slice(0, c < 0.5 ? 2 : 3));
+            ctx.stroke();
+        }
+    });
+
 })();

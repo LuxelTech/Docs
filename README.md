@@ -23,6 +23,8 @@ Then open <http://localhost:8000/>.
   divider, or use the slider under it.
 - **Who it's for:** a commercial panel (a drone surveys a warehouse roof and finds wet insulation) and a residential
   panel (heat leaks on an apartment block and a row of houses), each with the client types Luxel works for.
+- **How it works:** four steps (plan the flight, fly and capture, process, deliver the report), each with a small
+  animated icon; one step is active at a time while a bar over it fills.
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 

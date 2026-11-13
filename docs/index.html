@@ -139,7 +139,7 @@
         </section>
 
         <section class="audience" id="who" aria-labelledby="who-title">
-            <div class="audience-head">
+            <div class="section-head">
                 <p class="eyebrow"><span class="idx">03</span> Who it's for</p>
                 <h2 id="who-title">Built for big buildings.</h2>
                 <p>Flat roofs the size of car parks and facades ten storeys high: the buildings where ladders,
@@ -195,6 +195,74 @@
                     </ul>
                 </article>
             </div>
+        </section>
+
+        <section class="how" id="how" aria-labelledby="how-title">
+            <div class="section-head">
+                <p class="eyebrow"><span class="idx">04</span> How it works</p>
+                <h2 id="how-title">From flight plan to report.</h2>
+                <p>Every survey follows the same four steps, so you know what happens on site and what you
+                    receive at the end.</p>
+            </div>
+
+            <ol class="how-steps">
+                <li class="how-step">
+                    <i class="how-bar" aria-hidden="true"></i>
+                    <figure class="scene how-scene">
+                        <canvas id="how-plan" role="img"
+                            aria-label="A top-down site plan of an L-shaped building, with a back-and-forth flight path drawing itself over it and waypoints at each turn."></canvas>
+                        <div class="hud" aria-hidden="true">
+                            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                        </div>
+                    </figure>
+                    <p class="how-num">STEP 01</p>
+                    <h3>Plan the flight</h3>
+                    <p>We map the site and its surroundings, then plan an automated flight path, altitude and camera
+                        settings for the building.</p>
+                </li>
+                <li class="how-step">
+                    <i class="how-bar" aria-hidden="true"></i>
+                    <figure class="scene how-scene">
+                        <canvas id="how-fly" role="img"
+                            aria-label="A drone flies back and forth over a building, its camera flashing as it takes photos while an image counter climbs."></canvas>
+                        <div class="hud" aria-hidden="true">
+                            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                        </div>
+                    </figure>
+                    <p class="how-num">STEP 02</p>
+                    <h3>Fly and capture</h3>
+                    <p>The drone flies the planned route, capturing overlapping photos and calibrated thermal images.
+                        No scaffolding, no lifts, no one on the roof.</p>
+                </li>
+                <li class="how-step">
+                    <i class="how-bar" aria-hidden="true"></i>
+                    <figure class="scene how-scene">
+                        <canvas id="how-process" role="img"
+                            aria-label="Scattered points drift together into the shape of a building, which then fills with thermal colour."></canvas>
+                        <div class="hud" aria-hidden="true">
+                            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                        </div>
+                    </figure>
+                    <p class="how-num">STEP 03</p>
+                    <h3>Process</h3>
+                    <p>The images become point clouds, 3D models and orthomosaics; the thermal images are checked and
+                        analysed.</p>
+                </li>
+                <li class="how-step">
+                    <i class="how-bar" aria-hidden="true"></i>
+                    <figure class="scene how-scene">
+                        <canvas id="how-report" role="img"
+                            aria-label="A report page fills in: a thermal image with a marked finding, lines of text, and a check mark."></canvas>
+                        <div class="hud" aria-hidden="true">
+                            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                        </div>
+                    </figure>
+                    <p class="how-num">STEP 04</p>
+                    <h3>Deliver the report</h3>
+                    <p>You receive the models, maps and a clear report: each finding with its location, thermal image,
+                        temperature and what it means.</p>
+                </li>
+            </ol>
         </section>
     </main>
 
