@@ -30,7 +30,7 @@ Then open <http://localhost:8000/>.
   its marker on both images.
 
 A rail of icons on the left edge (always visible, also on phones) jumps to each section and lights the one on screen;
-hovering or focusing an icon shows its name. Each section also has "Previous" and "Next" links at its top and bottom.
+hovering or focusing an icon shows its name. The section on screen also shows "Previous" and "Next" links at its top and bottom (other sections hide theirs).
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 
