@@ -1609,6 +1609,140 @@
     }
 
     // ======================================================================================
+    // Contact: a drone over a building sends a stream of packets along an arc to an envelope, which
+    // lights up with a tick once all have arrived. Same oblique view as "Who it's for".
+    // The address is stored as reversed, XOR-ed character codes and only assembled when the visitor
+    // asks for it, so it never appears as text in the page or this file.
+    // ======================================================================================
+    const CON_PACKETS = 12, CON_GAP = 0.3, CON_FLIGHT = 1.3;   // packets, seconds between them, seconds in flight
+    const CON_DONE = (CON_PACKETS - 1) * CON_GAP + CON_FLIGHT, CON_PERIOD = CON_DONE + 2.2;
+    const CON_ENV = { x0: 352, x1: 446, y0: 96, y1: 158 };     // the envelope, on the front plane
+
+    function drawContact(ctx, w, h, t) {
+        const { k, P } = oblique(w, h);
+        const p = t % CON_PERIOD, s = Math.max(0.7, k);
+        ctx.lineWidth = 1;
+        auGround(ctx, P);
+        auBox(ctx, P, 40, 190, 150, 60);
+        for (let f = 0; f < 7; f++) {
+            for (let c = 0; c < 5; c++) auRect(ctx, P, 52 + c * 27.5, 16 + f * 19, 14, 10);
+        }
+
+        // The drone bobs over the roof; the envelope sits to the right.
+        const bob = reduce.matches ? 0 : Math.sin(t * 2.2) * 3;
+        const [dx, dy] = P(118, 214 + bob, 30);
+        const E = CON_ENV, [ex, ey] = P((E.x0 + E.x1) / 2, (E.y0 + E.y1) / 2);
+        const [cx, cy] = P(268, 282);
+        const at = (u) => [mix(mix(dx, cx, u), mix(cx, ex, u), u), mix(mix(dy, cy, u), mix(cy, ey, u), u)];
+
+        // The arc, dashed and faint.
+        ctx.setLineDash([3 * s, 5 * s]);
+        ctx.strokeStyle = 'rgba(255,178,28,0.28)';
+        ctx.beginPath();
+        ctx.moveTo(dx, dy);
+        ctx.quadraticCurveTo(cx, cy, ex, ey);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Packets in flight, each a small square with a short fading trail.
+        let arrived = 0, flash = 0;
+        for (let i = 0; i < CON_PACKETS; i++) {
+            const u = (p - i * CON_GAP) / CON_FLIGHT;
+            if (u >= 1) {
+                arrived++;
+                flash = Math.max(flash, 1 - (u - 1) * CON_FLIGHT / 0.35);
+                continue;
+            }
+            if (u <= 0) continue;
+            const e = ease(u);
+            for (let j = 4; j >= 0; j--) {
+                const [x, y] = at(Math.max(0, e - j * 0.025)), r = (j ? 1.6 : 2.6) * s;
+                ctx.fillStyle = j ? `rgba(255,122,26,${0.35 - j * 0.06})` : '#ffd84c';
+                ctx.fillRect(x - r, y - r, r * 2, r * 2);
+            }
+        }
+        hud('packets', String(arrived));
+        hud('link', arrived === CON_PACKETS ? 'DELIVERED' : 'SENDING');
+
+        // The envelope: brighter as packets land, with a glow and a tick once all are in.
+        const done = arrived === CON_PACKETS, glow = done ? 1 - clamp((p - CON_PERIOD + 0.5) / 0.5) : 0;
+        if (glow > 0) {
+            const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, 70 * k);
+            g.addColorStop(0, `rgba(255,122,26,${0.32 * glow})`);
+            g.addColorStop(1, 'rgba(255,122,26,0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(ex - 70 * k, ey - 70 * k, 140 * k, 140 * k);
+        }
+        const edge = done ? `rgba(255,178,28,${0.5 + 0.5 * glow})` : `rgba(92,200,255,${0.45 + 0.5 * clamp(flash)})`;
+        poly(ctx, P, [[E.x0, E.y0, 0], [E.x1, E.y0, 0], [E.x1, E.y1, 0], [E.x0, E.y1, 0]], '#0b0912', edge);
+        ctx.strokeStyle = edge;
+        ctx.beginPath();
+        ctx.moveTo(...P(E.x0, E.y1));
+        ctx.lineTo(...P((E.x0 + E.x1) / 2, E.y0 + (E.y1 - E.y0) * 0.38));
+        ctx.lineTo(...P(E.x1, E.y1));
+        ctx.moveTo(...P(E.x0, E.y0));
+        ctx.lineTo(...P(E.x0 + (E.x1 - E.x0) * 0.36, E.y0 + (E.y1 - E.y0) * 0.5));
+        ctx.moveTo(...P(E.x1, E.y0));
+        ctx.lineTo(...P(E.x1 - (E.x1 - E.x0) * 0.36, E.y0 + (E.y1 - E.y0) * 0.5));
+        ctx.stroke();
+        if (done) {
+            const [tx, ty] = P(E.x1, E.y1);
+            ctx.strokeStyle = '#ffb21c';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(tx, ty, 10 * s, 0, TAU);
+            ctx.moveTo(tx - 4.5 * s, ty);
+            ctx.lineTo(tx - 1.2 * s, ty + 3.4 * s);
+            ctx.lineTo(tx + 4.8 * s, ty - 3.6 * s);
+            ctx.stroke();
+            ctx.lineWidth = 1;
+        }
+
+        // The drone: two crossed arms with rotors and a blinking light, as in the commercial scene.
+        ctx.strokeStyle = '#ffb21c';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(dx - 9 * s, dy - 3 * s); ctx.lineTo(dx + 9 * s, dy + 3 * s);
+        ctx.moveTo(dx + 9 * s, dy - 3 * s); ctx.lineTo(dx - 9 * s, dy + 3 * s);
+        for (const [ax, ay] of [[-9, -3], [9, 3], [9, -3], [-9, 3]]) {
+            ctx.moveTo(dx + ax * s + 4.5 * s, dy + ay * s);
+            ctx.ellipse(dx + ax * s, dy + ay * s, 4.5 * s, 1.6 * s, 0, 0, TAU);
+        }
+        ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.fillStyle = (t * 2) % 1 < 0.5 ? '#ff3c88' : 'rgba(255,60,136,0.3)';
+        ctx.fillRect(dx - 1.5 * s, dy - 1.5 * s, 3 * s, 3 * s);
+    }
+
+    addScene(document.getElementById('contact-canvas'), { draw: drawContact, still: 2.4 });
+
+    const CON_ADDR = [66, 73, 79, 94, 4, 70, 79, 82, 95, 70, 106, 79, 92, 75, 78];
+    const conReveal = document.querySelector('.contact-reveal');
+    const conAddress = document.querySelector('.contact-address');
+    const conMail = document.querySelector('.contact-mail');
+    const conStatus = document.querySelector('.contact-status');
+    if (conReveal) {
+        conReveal.hidden = false;
+        conReveal.addEventListener('click', () => {
+            const addr = String.fromCharCode(...CON_ADDR.map((c) => c ^ 0x2a)).split('').reverse().join('');
+            conMail.href = `mailto:${addr}?subject=${encodeURIComponent('Enquiry from luxel.tech')}`;
+            conMail.textContent = addr;
+            conReveal.hidden = true;
+            conAddress.hidden = false;
+            conMail.focus();
+        });
+        document.querySelector('.contact-copy').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(conMail.textContent);
+                conStatus.textContent = 'Copied.';
+            } catch {
+                getSelection().selectAllChildren(conMail);
+                conStatus.textContent = 'Copying was blocked; the address is selected, so copy it from there.';
+            }
+        });
+    }
+
+    // ======================================================================================
     // Section rail: lights the icon of the section that crosses the middle of the window, and marks that
     // section .is-current so only its Previous/Next links show.
     // ======================================================================================

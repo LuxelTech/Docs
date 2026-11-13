@@ -3,7 +3,8 @@
 ## Phases (current and upcoming)
 
 - **Up next:** nothing planned; new requests go in `new.md`.
-- **Later:** a contact form (see "Contact form" below); not to be built until the user asks.
+- **Later:** a contact form, only if the hidden address isn't enough: Turnstile plus a Cloudflare Worker sending
+  through Resend (DNS records at Namecheap; the luxel.tech mailbox stays as it is). Not to be built until the user asks.
 
 ## Decisions
 
@@ -11,35 +12,12 @@
 - Layout: hero, then one section per core service, each with a scene drawn in code (no photos).
 - Hero: a thermal scan sweeping up a point-cloud building.
 - Logo, favicon and palette reused from Luxel's main site.
-- No contact information for now.
+- Contact: the luxel.tech email address, revealed on request rather than a form (no accounts, DNS changes or third
+  parties; the site sends nothing, so it can't be used for phishing). Never written as plain text in the repo.
 - New sections go after the two service demos: who it's for, how it works, sample deliverables.
 - Scenes use 2D canvas rather than WebGL: the point counts are small, and it needs no fallback.
 
-## Contact form (later phase)
-
-The request: a free contact form that emails Luxel and can't be used by scripts or for phishing. GitHub Pages can't
-send email, so the form posts to a small service that sends it.
-
-Decided so far:
-
-- **Backend:** Cloudflare Turnstile (free bot check) plus a Cloudflare Worker (free plan) that verifies the token,
-  checks a honeypot field and field lengths, rate-limits, and sends a plain-text email. The Worker's code goes in
-  `worker/` (not served by Pages); the user deploys it with `wrangler` from their Cloudflare account.
-- **Anti-abuse rules:** the recipient is fixed in the Worker (a secret, not in the repo or the page); no copy or
-  auto-reply goes to the visitor; the visitor's address goes only in Reply-To.
-- **Fields:** name, email, organisation, service of interest (Photogrammetry & Mapping, Thermography, Both, Not
-  sure), and the message itself.
-- **Placement:** a new last section, "Contact", after "What you receive", with its own rail icon and
-  Previous/Next links.
-- **DNS:** `luxel.tech` is on Namecheap, so Cloudflare Email Routing isn't available as it stands.
-
-Open when this phase is planned:
-
-- Sending: Resend (free plan, a few DNS records added at Namecheap) or moving the domain's DNS to Cloudflare
-  (then Email Routing). Moving DNS means re-creating the GitHub Pages records there.
-- Which fields are required (name, email and message are the likely ones), and the privacy note's wording.
-- This reverses the earlier "no contact information" decision.
-
+## Done
 
 - **Scaffold and hero** (`docs/index.html`, `docs/style.css`, `docs/main.js` hero section): page chrome, logo,
   favicon, CNAME, the scene runner and the hero thermal scan.
@@ -73,3 +51,8 @@ Open when this phase is planned:
   the current section lit; "▴ Previous · <section>" / "▾ Next · <section>" links at each section's top and bottom,
   replacing the hero's "01"/"02" buttons; only the section on screen shows its links (by request, so two sections'
   links never sit side by side at a boundary). The link preview is unchanged.
+- **Contact** (`#contact` in `docs/index.html`, the contact styles in `docs/style.css`, the Contact section of
+  `docs/main.js`): heading "Tell us about your building.", a "Show email address" button that assembles the address
+  (stored as reversed, XOR-ed character codes) into a mailto link with a Copy button; a note for visitors without
+  JavaScript. Beside it a scene: a drone over a building sends packets along an arc to an envelope, which lights up
+  with a tick. Rail icon: an envelope. Still frame: packets in flight.
