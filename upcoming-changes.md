@@ -3,7 +3,7 @@
 ## Phases (current and upcoming)
 
 - **Up next:** nothing planned; new requests go in `new.md`.
-- **Later:** contact details (left out for now, by request).
+- **Later:** a contact form (see "Contact form" below); not to be built until the user asks.
 
 ## Decisions
 
@@ -15,7 +15,31 @@
 - New sections go after the two service demos: who it's for, how it works, sample deliverables.
 - Scenes use 2D canvas rather than WebGL: the point counts are small, and it needs no fallback.
 
-## Done
+## Contact form (later phase)
+
+The request: a free contact form that emails Luxel and can't be used by scripts or for phishing. GitHub Pages can't
+send email, so the form posts to a small service that sends it.
+
+Decided so far:
+
+- **Backend:** Cloudflare Turnstile (free bot check) plus a Cloudflare Worker (free plan) that verifies the token,
+  checks a honeypot field and field lengths, rate-limits, and sends a plain-text email. The Worker's code goes in
+  `worker/` (not served by Pages); the user deploys it with `wrangler` from their Cloudflare account.
+- **Anti-abuse rules:** the recipient is fixed in the Worker (a secret, not in the repo or the page); no copy or
+  auto-reply goes to the visitor; the visitor's address goes only in Reply-To.
+- **Fields:** name, email, organisation, service of interest (Photogrammetry & Mapping, Thermography, Both, Not
+  sure), and the message itself.
+- **Placement:** a new last section, "Contact", after "What you receive", with its own rail icon and
+  Previous/Next links.
+- **DNS:** `luxel.tech` is on Namecheap, so Cloudflare Email Routing isn't available as it stands.
+
+Open when this phase is planned:
+
+- Sending: Resend (free plan, a few DNS records added at Namecheap) or moving the domain's DNS to Cloudflare
+  (then Email Routing). Moving DNS means re-creating the GitHub Pages records there.
+- Which fields are required (name, email and message are the likely ones), and the privacy note's wording.
+- This reverses the earlier "no contact information" decision.
+
 
 - **Scaffold and hero** (`docs/index.html`, `docs/style.css`, `docs/main.js` hero section): page chrome, logo,
   favicon, CNAME, the scene runner and the hero thermal scan.
