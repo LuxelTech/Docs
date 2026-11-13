@@ -38,6 +38,11 @@ buildings; the page shows those services with animated scenes drawn in code (no 
   (`performance.now()`, `HOW_STEP` s per step), so only step `i` animates (`u` 0→1) while the others draw their
   finished state, dimmed by `.how-steps.is-running .how-step:not(.is-active)`. It sets each `.how-bar`'s `--fill`.
   Icons draw in 200 × 150 units. Checking: an icon changes only during its own step, so watch a full cycle (4 × `HOW_STEP`).
+- **What you receive:** the sample report is HTML (`.report` in `style.css`, a light page with its own `--ink`
+  colours); its two canvases share one top-down view in 400 × 300 units. `repTemp(x, y)` is the roof's made-up
+  temperature (0–1 on the ironbow ramp), sampled once into `repIR`; `REP_FINDINGS` places the markers, in the order
+  of the table's `data-finding` rows. `setFinding(i)` (row hover, focus, tap) highlights a row and its markers and
+  redraws both canvases, so it also works under reduced motion. All report data is invented and labelled as a sample.
 - **Link preview:** `og:image` is `assets/img/social-card.png`, a 1200×630 screenshot of the hero's still frame made
   by `tools/social-card.js` (Playwright; not served). Regenerate it when the hero, logo or headline changes.
 - **404:** `docs/404.html` uses root-relative paths (`/style.css`), since Pages serves it at any unknown path.

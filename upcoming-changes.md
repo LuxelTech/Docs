@@ -2,13 +2,8 @@
 
 ## Phases (current and upcoming)
 
-- **Up next:** Sample deliverables.
+- **Up next:** nothing planned; new requests go in `new.md`.
 - **Later:** contact details (left out for now, by request).
-
-## Sample deliverables
-
-A drawn mock-up of a Luxel inspection report page (thermal image, findings table, roof plan with markers): what a
-client receives. To plan.
 
 ## Decisions
 
@@ -44,3 +39,7 @@ client receives. To plan.
   `docs/main.js`): heading "From flight plan to report.", four steps (plan the flight, fly and capture, process,
   deliver the report) with animated icons, one active at a time with a filling bar, the others dimmed in their
   finished state; no durations. Still: every icon finished, none dimmed.
+- **Sample deliverables** (`#deliverables` in `docs/index.html`, `.report` in `docs/style.css`, the "What you
+  receive" section of `docs/main.js`): heading "A report, not a pile of images.", the deliverables (no file formats)
+  beside a sample report page: letterhead, "Sample · illustrative data" stamp, a thermal image of a flat roof and a
+  roof plan with findings 1–3, and a findings table whose rows highlight their markers (hover, focus, tap).

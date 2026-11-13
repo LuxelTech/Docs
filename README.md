@@ -25,6 +25,9 @@ Then open <http://localhost:8000/>.
   panel (heat leaks on an apartment block and a row of houses), each with the client types Luxel works for.
 - **How it works:** four steps (plan the flight, fly and capture, process, deliver the report), each with a small
   animated icon; one step is active at a time while a bar over it fills.
+- **What you receive:** the deliverables beside a sample report page (illustrative data): a thermal image of a flat
+  roof and a roof plan with numbered findings, and a findings table. Hovering, tapping or tabbing to a row highlights
+  its marker on both images.
 
 Every animation stops for visitors who ask their system for reduced motion; they see a still frame instead.
 

@@ -264,6 +264,65 @@
                 </li>
             </ol>
         </section>
+
+        <section class="service deliver" id="deliverables" aria-labelledby="deliver-title">
+            <div class="service-text">
+                <p class="eyebrow"><span class="idx">05</span> What you receive</p>
+                <h2 id="deliver-title">A report, not a pile of images.</h2>
+                <p>Every finding is located, measured and explained, so the people who look after the building can
+                    act on it straight away, and you keep the data for the next survey.</p>
+                <ul class="specs">
+                    <li><b>Report</b> Findings with thermal images, temperatures, locations and priorities.</li>
+                    <li><b>Orthomosaic</b> A map-accurate aerial image of the roof and site.</li>
+                    <li><b>3D model</b> The textured model and point cloud, ready to measure.</li>
+                    <li><b>Thermal images</b> The radiometric originals, with a temperature in every pixel.</li>
+                </ul>
+            </div>
+
+            <article class="report" aria-label="Sample inspection report (illustrative data)">
+                <header class="report-head">
+                    <img src="assets/img/luxel-logo-700.webp" width="700" height="233" alt="Luxel">
+                    <div class="report-title">
+                        <span>Thermographic roof inspection</span>
+                        <span>Report LX-0417 · page 3 of 12</span>
+                    </div>
+                </header>
+                <div class="report-body">
+                    <span class="report-stamp" aria-hidden="true">Sample · illustrative data</span>
+                    <p class="report-meta">
+                        <span>Distribution centre, Unit 4</span>
+                        <span>Roof area 12 400 m²</span>
+                        <span>Air 3 °C · overcast · night</span>
+                    </p>
+                    <div class="report-figs">
+                        <figure>
+                            <canvas id="rep-ir" role="img"
+                                aria-label="A top-down thermal image of a flat warehouse roof with three numbered findings: a warm patch of wet insulation, a warm frame round a rooflight, and a warm strip along the north parapet."></canvas>
+                            <figcaption>Fig. 3.1 · Thermal image, roof</figcaption>
+                        </figure>
+                        <figure>
+                            <canvas id="rep-plan" role="img"
+                                aria-label="A roof plan with a grid of bays lettered A to F and numbered 1 to 5, rooflights, a plant deck, and the same three numbered findings."></canvas>
+                            <figcaption>Fig. 3.2 · Roof plan, findings</figcaption>
+                        </figure>
+                    </div>
+                    <table class="report-table">
+                        <caption>Findings</caption>
+                        <thead>
+                            <tr><th>No.</th><th>Location</th><th>Finding</th><th>ΔT</th><th>Priority</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr data-finding="0" tabindex="0"><td><span class="badge">1</span></td><td>Bay C3</td>
+                                <td>Wet insulation</td><td>+4.1 °C</td><td><span class="prio high">High</span></td></tr>
+                            <tr data-finding="1" tabindex="0"><td><span class="badge">2</span></td><td>Rooflight R5</td>
+                                <td>Air leakage at frame</td><td>+2.6 °C</td><td><span class="prio med">Medium</span></td></tr>
+                            <tr data-finding="2" tabindex="0"><td><span class="badge">3</span></td><td>North parapet, F1</td>
+                                <td>Thermal bridge</td><td>+1.8 °C</td><td><span class="prio low">Low</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
     </main>
 
     <footer class="site-footer">

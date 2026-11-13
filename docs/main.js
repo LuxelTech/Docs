@@ -1427,4 +1427,185 @@
         }
     });
 
+    // ======================================================================================
+    // What you receive: a sample report with a thermal image of a flat roof and a roof plan, both
+    // in the same top-down view (units 400 × 300), with numbered markers. Hovering, focusing or
+    // tapping a findings row highlights its marker on both (repState.active).
+    // ======================================================================================
+    const REP_W = 400, REP_H = 300;
+    const REP_ROOF = [20, 20, 380, 280];                    // x0, y0, x1, y1
+    const REP_BAY_W = 60, REP_BAY_H = 52;                   // bays A–F across, 1–5 down
+    const REP_LIGHTS = [98, 202].flatMap((y) => [0, 1, 2, 3, 4, 5].map((c) => [50 + c * REP_BAY_W, y]));
+    const REP_DECK = [30, 236, 82, 272];
+    const REP_FINDINGS = [[165, 150], [290, 98], [352, 22]];   // bay C3, rooflight R5, north parapet at F1
+
+    function repTemp(x, y, noise) {
+        const [x0, y0, x1, y1] = REP_ROOF;
+        if (x < x0 - 3 || x > x1 + 3 || y < y0 - 3 || y > y1 + 3) return 0.1 + noise;            // ground
+        if (x < x0 + 3 || x > x1 - 3 || y < y0 + 3 || y > y1 - 3) {                                // parapet
+            return 0.42 + 0.3 * blob2(x, y, 352, 22, 22, 6) + noise;
+        }
+        let v = 0.3 + noise + ((x - x0) % 20 < 1.2 ? 0.03 : 0);                                     // membrane seams
+        if (x > REP_DECK[0] && x < REP_DECK[2] && y > REP_DECK[1] && y < REP_DECK[3]) {            // plant deck
+            return 0.55 + 0.35 * (blob2(x, y, 44, 254, 7) + blob2(x, y, 68, 254, 7));
+        }
+        for (const [cx, cy] of REP_LIGHTS) {
+            const dx = Math.abs(x - cx), dy = Math.abs(y - cy);
+            if (dx < 12 && dy < 7) return 0.1 + noise;                                              // rooflight glass
+            if (dx < 15 && dy < 10) v += 0.05;
+        }
+        const fd = Math.max(Math.abs(x - 290) - 12, Math.abs(y - 98) - 7);                         // rooflight R5's
+        if (fd > 0) v += 0.34 * Math.exp(-fd / 5) * (x > 284 ? 1 : 0.4);                            // leaking frame
+        v += 0.42 * Math.min(1, blob2(x, y, 165, 150, 30, 22) + 0.8 * blob2(x, y, 188, 162, 18, 14) + 0.7 * blob2(x, y, 150, 136, 16, 12));
+        return v;
+    }
+
+    const repIR = (() => {
+        const SW = 200, SH = 150, small = document.createElement('canvas');
+        small.width = SW;
+        small.height = SH;
+        const sg = small.getContext('2d'), img = sg.createImageData(SW, SH), rand = seeded(31);
+        for (let j = 0; j < SH; j++) {
+            for (let i = 0; i < SW; i++) {
+                const [r, g, b] = ironbow(repTemp((i + 0.5) * REP_W / SW, (j + 0.5) * REP_H / SH, (rand() - 0.5) * 0.03));
+                img.data.set([r, g, b, 255], (j * SW + i) * 4);
+            }
+        }
+        sg.putImageData(img, 0, 0);
+        const out = document.createElement('canvas');
+        out.width = REP_W * 2;
+        out.height = REP_H * 2;
+        const og = out.getContext('2d');
+        og.imageSmoothingQuality = 'high';
+        og.drawImage(small, 0, 0, out.width, out.height);
+        return out;
+    })();
+
+    const repState = { active: -1 };
+
+    // The numbered markers, drawn in report units after the caller has scaled the context.
+    function repMarkers(ctx, t, k, ink) {
+        REP_FINDINGS.forEach(([x, y], i) => {
+            const on = repState.active === i, dim = repState.active >= 0 && !on;
+            const pulse = reduce.matches ? 0.5 : (t * 0.8 + i * 0.3) % 1;
+            ctx.globalAlpha = dim ? 0.35 : 1;
+            ctx.strokeStyle = on ? '#ff7a1a' : ink;
+            ctx.lineWidth = (on ? 2.4 : 1.4) / k;
+            ctx.globalAlpha *= 1 - pulse * 0.9;
+            ctx.beginPath();
+            ctx.arc(x, y, (on ? 14 : 11) + pulse * 12, 0, TAU);
+            ctx.stroke();
+            ctx.globalAlpha = dim ? 0.35 : 1;
+            ctx.fillStyle = on ? '#ff7a1a' : 'rgba(10,7,16,0.85)';
+            ctx.beginPath();
+            ctx.arc(x, y, on ? 11 : 9, 0, TAU);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `700 ${on ? 13 : 11}px ui-monospace, Consolas, monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(i + 1), x, y + 0.5);
+        });
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'start';
+    }
+
+    function repFit(ctx, w, h) {
+        const k = Math.min(w / REP_W, h / REP_H);
+        ctx.translate((w - REP_W * k) / 2, (h - REP_H * k) / 2);
+        ctx.scale(k, k);
+        return k;
+    }
+
+    function drawReportIR(ctx, w, h, t) {
+        ctx.save();
+        const k = repFit(ctx, w, h);
+        ctx.drawImage(repIR, 0, 0, REP_W, REP_H);
+        repMarkers(ctx, t, k, '#ffffff');
+        ctx.restore();
+    }
+
+    function drawReportPlan(ctx, w, h, t) {
+        ctx.save();
+        const k = repFit(ctx, w, h);
+        const [x0, y0, x1, y1] = REP_ROOF;
+        ctx.lineWidth = 1 / k;
+        ctx.strokeStyle = 'rgba(92,200,255,0.2)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let x = x0 + REP_BAY_W; x < x1; x += REP_BAY_W) { ctx.moveTo(x, y0); ctx.lineTo(x, y1); }
+        for (let y = y0 + REP_BAY_H; y < y1; y += REP_BAY_H) { ctx.moveTo(x0, y); ctx.lineTo(x1, y); }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // The wet area as surveyed: a hatched outline round finding 1.
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(168, 151, 40, 28, 0.25, 0, TAU);
+        ctx.fillStyle = 'rgba(255,122,26,0.14)';
+        ctx.fill();
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(255,122,26,0.5)';
+        ctx.beginPath();
+        for (let d = -80; d < 80; d += 6) { ctx.moveTo(128 + d, 190); ctx.lineTo(168 + d, 110); }
+        ctx.stroke();
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(255,122,26,0.8)';
+        ctx.beginPath();
+        ctx.ellipse(168, 151, 40, 28, 0.25, 0, TAU);
+        ctx.stroke();
+
+        ctx.strokeStyle = AU_LINE;
+        ctx.lineWidth = 1.6 / k;
+        ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+        ctx.lineWidth = 1 / k;
+        for (const [cx, cy] of REP_LIGHTS) ctx.strokeRect(cx - 12, cy - 7, 24, 14);
+        ctx.strokeRect(REP_DECK[0], REP_DECK[1], REP_DECK[2] - REP_DECK[0], REP_DECK[3] - REP_DECK[1]);
+        ctx.beginPath();
+        for (let d = 0; d < 90; d += 8) {
+            ctx.moveTo(REP_DECK[0] + Math.max(0, d - 36), REP_DECK[1] + Math.min(36, d));
+            ctx.lineTo(REP_DECK[0] + Math.min(52, d), REP_DECK[1] + Math.max(0, d - 52));
+        }
+        ctx.strokeStyle = AU_FAINT;
+        ctx.stroke();
+
+        ctx.font = '700 10px ui-monospace, Consolas, monospace';
+        ctx.fillStyle = 'rgba(184,174,191,0.85)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        'ABCDEF'.split('').forEach((c, i) => ctx.fillText(c, x0 + (i + 0.5) * REP_BAY_W, y1 + 11));
+        for (let r = 0; r < 5; r++) ctx.fillText(String(r + 1), x0 - 10, y0 + (r + 0.5) * REP_BAY_H);
+        ctx.fillText('N', x1 + 10, y0 + 18);
+        ctx.beginPath();
+        ctx.moveTo(x1 + 10, y0 + 2);
+        ctx.lineTo(x1 + 6, y0 + 10);
+        ctx.lineTo(x1 + 14, y0 + 10);
+        ctx.fill();
+        ctx.textAlign = 'start';
+        repMarkers(ctx, t, k, '#ffffff');
+        ctx.restore();
+    }
+
+    const repScenes = [
+        addScene(document.getElementById('rep-ir'), { draw: drawReportIR, still: 0 }),
+        addScene(document.getElementById('rep-plan'), { draw: drawReportPlan, still: 0 }),
+    ].filter(Boolean);
+    const repRows = [...document.querySelectorAll('[data-finding]')];
+
+    function setFinding(i) {
+        repState.active = i;
+        repRows.forEach((row, j) => row.classList.toggle('is-active', j === i));
+        repScenes.forEach(render);
+    }
+
+    for (const row of repRows) {
+        const i = Number(row.dataset.finding);
+        row.addEventListener('mouseenter', () => setFinding(i));
+        row.addEventListener('mouseleave', () => document.activeElement !== row && setFinding(-1));
+        row.addEventListener('focus', () => setFinding(i));
+        row.addEventListener('blur', () => setFinding(-1));
+        row.addEventListener('click', () => row.focus());
+    }
+
 })();
